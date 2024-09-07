@@ -158,13 +158,7 @@ bool Preprocessor::parse(std::string &str) {
             for(std::sregex_iterator it = std::sregex_iterator(s.begin(), s.end(), r); it != std::sregex_iterator(); ++it) {
                 std::string pragma = trim_copy(it->str());
                 
-                if (pragma == "bitwise 0" || pragma == "bitwise off") {
-                    bitwiseOperators = false;
-                }
                 
-                if (pragma == "bitwise 1" || pragma == "bitwise on") {
-                    bitwiseOperators = true;
-                }
                 
                 if (pragma == "verbose aliases") {
                     Singleton::shared()->aliases.verbose = !Singleton::shared()->aliases.verbose;
@@ -174,39 +168,13 @@ bool Preprocessor::parse(std::string &str) {
                     Singleton::shared()->aliases.descendingOrder = false;
                 }
                 
-                if (pragma == "newline") {
-                    newline = true;
-                }
                 
-                if (pragma == "indents") {
-                    indents = true;
-                }
                 
-                if (pragma == "reduce") {
-                    reduce = true;
-                }
                 
-                if (pragma == "messages") {
-                    messages = true;
-                }
                 
-                // 'cstyle' Experimental use only: DO NOT USE
-                if (pragma == "cstyle") {
-                    cstyle = !cstyle;
-                    std::cout << MessageType::Verbose << "c/c++ style " << (cstyle ? "enabled!" : "disabled!") << "\n";
-                }
                 
-                if (regex_search(pragma, std::regex(R"(minify (?:\d+|-1))"))) {
-                    size_t start = pragma.find(" ") + 1;
-                    size_t length = pragma.length() - start;
-                    minify = atoi(pragma.substr(start,length).c_str());
-                }
                 
-                if (regex_search(pragma, std::regex(R"(tabsize (?:\d+))"))) {
-                    size_t start = pragma.find(" ") + 1;
-                    size_t length = pragma.length() - start;
-                    Singleton::shared()->tabsize = (unsigned int)atoi(pragma.substr(start,length).c_str());
-                }
+                
                 
                 if (verbose) std::cout << MessageType::Verbose << "#pragma: " << pragma << '\n';
             }

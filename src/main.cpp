@@ -33,7 +33,6 @@
 #include "common.hpp"
 
 #include "Preprocessor.hpp"
-#include "Alias.hpp"
 #include "Strings.hpp"
 
 #include "build.h"
@@ -59,37 +58,6 @@ void preProcess(std::string &ln, std::ofstream &outfile);
 
 // MARK: - Utills
 
-
-void minifier(std::string &str) {
-    static size_t length = 0;
-    strings.preserveStrings(str);
-    
-    
-    str = std::regex_replace(str, std::regex(R"(^ *)"), "");
-    
-//    str = std::regex_replace(str, std::regex(R"( *\n$)"), " ");
-    
-    str = std::regex_replace(str, std::regex(R"(\/\/.*)"), "");
-    str = std::regex_replace(str, std::regex(R"( *; *)"), ";");
-    
-    str = std::regex_replace(str, std::regex(R"( *\] *)"), "]");
-    str = std::regex_replace(str, std::regex(R"( *\[ *)"), "[");
-    str = std::regex_replace(str, std::regex(R"( *\} *)"), "}");
-    str = std::regex_replace(str, std::regex(R"( *\{ *)"), "{");
-    
-    
-    
-    str = std::regex_replace(str, std::regex(R"(; *$)"), ";");
-    strings.restoreStrings(str);
-    
-    if (preprocessor.minify <= 0) return;
-    
-    length += str.length();
-    if (length > preprocessor.minify) {
-        length = 0;
-        str.append("\n");
-    }
-}
 
 void reduce(std::string &str) {
     std::regex r;
@@ -264,6 +232,7 @@ void preProcess(std::string &ln, std::ofstream &outfile) {
     
     Singleton *singleton = Singleton::shared();
     
+    static int variableAliasCount = -1, functionAliasCount = -1;
     
     ln = regex_replace(ln, std::regex(R"(\t)"), " "); // Convert all Tabs to spaces :- future reg-ex will not require to deal with '\t', only spaces.
     ln = regex_replace(ln, std::regex(R"(\x00)"), ""); // Remove all leading nulls as .hpprgm file is UTF-16LE
@@ -312,6 +281,8 @@ void preProcess(std::string &ln, std::ofstream &outfile) {
     
     trim(ln);
     
+    ln = std::regex_replace(ln, std::regex(R"(  +)"), " ");
+    
     ln = regex_replace(ln, std::regex(R"(>=)"), "≥");
     ln = regex_replace(ln, std::regex(R"(<=)"), "≤");
     ln = regex_replace(ln, std::regex(R"(!=)"), "≠");
@@ -343,6 +314,70 @@ void preProcess(std::string &ln, std::ofstream &outfile) {
 
     
     reduce(ln);
+    
+    if (regex_match(ln, std::regex(R"(\bBEGIN\b)", std::regex_constants::icase))) {
+        singleton->aliases.removeAllLocalAliases();
+        variableAliasCount = -1;
+    }
+    
+    r = std::regex(R"(\b(?:BEGIN|IF|CASE|FOR|WHILE|REPEAT|FOR|WHILE|REPEAT)\b)", std::regex_constants::icase);
+    for(auto it = std::sregex_iterator(ln.begin(), ln.end(), r); it != std::sregex_iterator(); ++it) {
+        singleton->nestingLevel++;
+        singleton->scope = Singleton::Scope::Local;
+    }
+    
+    r = std::regex(R"(\b(?:END|UNTIL)\b)", std::regex_constants::icase);
+    for(auto it = std::sregex_iterator(ln.begin(), ln.end(), r); it != std::sregex_iterator(); ++it) {
+        singleton->nestingLevel--;
+        if (0 == singleton->nestingLevel) {
+            singleton->scope = Singleton::Scope::Global;
+        }
+    }
+    
+    if (Singleton::Scope::Global == singleton->scope) {
+        // LOCAL
+        ln = regex_replace(ln, std::regex(R"(\bLOCAL +)"), "");
+        
+        // Function
+        r = R"(^[A-Za-z]\w*\((?:[A-Za-z]\w*,?)*\))";
+        if (regex_search(ln, m, r)) {
+            Aliases::TIdentity identity;
+            identity.scope = Aliases::Scope::Global;
+            identity.type = Aliases::Type::Function;
+            identity.identifier = m.str().substr(0, m.str().find("("));
+            
+            std::ostringstream os;
+            os << "f" << ++functionAliasCount;
+            identity.real = os.str();
+            
+            singleton->aliases.append(identity);
+        }
+    }
+    
+    if (Singleton::Scope::Local == singleton->scope) {
+        // LOCAL
+        r = R"(\bLOCAL (?:[A-Za-z]\w*[,;])+)";
+        if (regex_search(ln, m, r)) {
+            std::string matched = m.str();
+            r = R"([A-Za-z]\w*(?=[,;]))";
+            
+            for(auto it = std::sregex_iterator(matched.begin(), matched.end(), r); it != std::sregex_iterator(); ++it) {
+                if (it->str().length() < 3) continue;
+                Aliases::TIdentity identity;
+                identity.scope = Aliases::Scope::Local;
+                identity.type = Aliases::Type::Variable;
+                identity.identifier = it->str();
+                
+                std::ostringstream os;
+                os << "v" << ++variableAliasCount;
+                identity.real = os.str();
+                
+                singleton->aliases.append(identity);
+            }
+        }
+    }
+    
+    ln = singleton->aliases.resolveAliasesInText(ln);
     
     strings.restoreStrings(ln);
     
@@ -462,7 +497,7 @@ int main(int argc, char **argv) {
     
     std::ifstream::pos_type insize = file_size(in_filename);
     std::ifstream::pos_type outsize = file_size(out_filename);
-    std::cout << "Reduced by " << insize - outsize << " bytes.\n";
+    std::cout << "File size reduction of " << insize - outsize << " bytes.\n";
     
     std::cout << "UTF-16LE File '" << out_filename << "' Succefuly Created.\n";
     

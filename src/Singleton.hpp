@@ -46,7 +46,7 @@ public:
     Aliases aliases;
     Comments comments;
     
-    unsigned int tabsize = 2;
+    int nestingLevel = 0;
     
     static Singleton *shared();
     

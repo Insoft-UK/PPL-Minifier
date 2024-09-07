@@ -13,7 +13,6 @@
 		13B13C312B66C2F000F9BCBB /* Strings.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 13B13C2F2B66C2F000F9BCBB /* Strings.cpp */; };
 		13C21F9A2A7829C80067CE22 /* Preprocessor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 13C21F982A7829C80067CE22 /* Preprocessor.cpp */; };
 		13C21F9D2A783D8D0067CE22 /* common.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 13C21F9B2A783D8D0067CE22 /* common.cpp */; };
-		13C21FB42A7892540067CE22 /* Alias.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 13C21FB22A7892540067CE22 /* Alias.cpp */; };
 		13F1D8832AB6185400EF623A /* Aliases.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 13F1D8812AB6185400EF623A /* Aliases.cpp */; };
 /* End PBXBuildFile section */
 
@@ -47,8 +46,6 @@
 		13C21F992A7829C80067CE22 /* Preprocessor.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = Preprocessor.hpp; sourceTree = "<group>"; };
 		13C21F9B2A783D8D0067CE22 /* common.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = common.cpp; sourceTree = "<group>"; };
 		13C21F9C2A783D8D0067CE22 /* common.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = common.hpp; sourceTree = "<group>"; };
-		13C21FB22A7892540067CE22 /* Alias.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Alias.cpp; sourceTree = "<group>"; };
-		13C21FB32A7892540067CE22 /* Alias.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = Alias.hpp; sourceTree = "<group>"; };
 		13F1D8812AB6185400EF623A /* Aliases.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Aliases.cpp; sourceTree = "<group>"; };
 		13F1D8822AB6185400EF623A /* Aliases.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = Aliases.hpp; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -103,7 +100,6 @@
 			children = (
 				13C21F9F2A783EA20067CE22 /* include */,
 				13C21F982A7829C80067CE22 /* Preprocessor.cpp */,
-				13C21FB22A7892540067CE22 /* Alias.cpp */,
 				13F1D8812AB6185400EF623A /* Aliases.cpp */,
 				1308E8F72AC6FCC5001EEC82 /* Comments.cpp */,
 				13B13C2F2B66C2F000F9BCBB /* Strings.cpp */,
@@ -115,7 +111,6 @@
 			isa = PBXGroup;
 			children = (
 				13C21F992A7829C80067CE22 /* Preprocessor.hpp */,
-				13C21FB32A7892540067CE22 /* Alias.hpp */,
 				13F1D8822AB6185400EF623A /* Aliases.hpp */,
 				1308E8F82AC6FCC5001EEC82 /* Comments.hpp */,
 				13B13C302B66C2F000F9BCBB /* Strings.hpp */,
@@ -206,7 +201,6 @@
 				13C21F9A2A7829C80067CE22 /* Preprocessor.cpp in Sources */,
 				137FB2892A03B06500AEFDF2 /* main.cpp in Sources */,
 				13C21F9D2A783D8D0067CE22 /* common.cpp in Sources */,
-				13C21FB42A7892540067CE22 /* Alias.cpp in Sources */,
 				13F1D8832AB6185400EF623A /* Aliases.cpp in Sources */,
 				1308E8F62AC48F20001EEC82 /* Singleton.cpp in Sources */,
 				1308E8F92AC6FCC5001EEC82 /* Comments.cpp in Sources */,
