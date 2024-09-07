@@ -108,21 +108,21 @@ std::ifstream::pos_type file_size(const std::string &filename)
     return pos;
 }
 
-//bool file_exists(const char *filename) {
-//    std::ifstream infile;
-//    
-//    infile.open(filename, std::ios::in);
-//    if (infile.is_open()) {
-//        infile.close();
-//        return true;
-//    }
-//    
-//    return false;
-//}
-//
-//bool file_exists(const std::string &filename) {
-//    return file_exists(filename.c_str());
-//}
+bool file_exists(const char *filename) {
+    std::ifstream infile;
+    
+    infile.open(filename, std::ios::in);
+    if (infile.is_open()) {
+        infile.close();
+        return true;
+    }
+    
+    return false;
+}
+
+bool file_exists(const std::string &filename) {
+    return file_exists(filename.c_str());
+}
 
 
 
