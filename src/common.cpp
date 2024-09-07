@@ -29,6 +29,7 @@
 
 static bool _failed = false;
 
+
 bool hasErrors(void) {
     return _failed;
 }

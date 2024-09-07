@@ -42,7 +42,7 @@ public:
         Local  = 2
     };
     Scope scope = Scope::Global;
-    
+
     Aliases aliases;
     Comments comments;
     

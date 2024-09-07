@@ -403,7 +403,7 @@ void error(void) {
 void info(void) {
     std::cout << "Copyright (c) 2024 Insoft. All rights reserved\n";
     int rev = (unsigned)__BUILD_NUMBER / 1000 % 10;
-    std::cout << "PPL Minimizer v" << (unsigned)__BUILD_NUMBER / 100000 << "." << (unsigned)__BUILD_NUMBER / 10000 % 10 << (rev ? "." + std::to_string(rev) : "") << " BUILD " << std::setfill('0') << std::setw(3) << __BUILD_NUMBER % 1000 << "\n\n";
+    std::cout << "PPL Minifier v" << (unsigned)__BUILD_NUMBER / 100000 << "." << (unsigned)__BUILD_NUMBER / 10000 % 10 << (rev ? "." + std::to_string(rev) : "") << " BUILD " << std::setfill('0') << std::setw(3) << __BUILD_NUMBER % 1000 << "\n\n";
 }
 
 void usage(void) {
