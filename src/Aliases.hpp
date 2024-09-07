@@ -34,15 +34,9 @@ class Aliases {
 public:
     enum class Type {
         Unknown,
-        Eenum,
-        Struct,
-        Member,
         Variable,
-        Macro,
-        Def,
         Function,
-        Property,
-        Method
+        Property
     };
     
     enum class Scope {
@@ -54,13 +48,10 @@ public:
     typedef struct TIdentity {
         std::string identifier;
         std::string real;
-        std::string parameters; // used by macros
         Type type;
         Scope scope;
         long line;              // line that definition accoured;
         std::string pathname;   // path and filename that definition accoured
-        bool deprecated = false;
-        std::string message;    // Used by deprecated, holds the message for deprecated.
     } TIdentity;
     std::vector<TIdentity> identities;
     
