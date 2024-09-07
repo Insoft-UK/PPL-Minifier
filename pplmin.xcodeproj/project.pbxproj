@@ -8,7 +8,6 @@
 
 /* Begin PBXBuildFile section */
 		1308E8F62AC48F20001EEC82 /* Singleton.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1308E8F42AC48F20001EEC82 /* Singleton.cpp */; };
-		1308E8F92AC6FCC5001EEC82 /* Comments.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1308E8F72AC6FCC5001EEC82 /* Comments.cpp */; };
 		137FB2892A03B06500AEFDF2 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 137FB2882A03B06500AEFDF2 /* main.cpp */; };
 		13B13C312B66C2F000F9BCBB /* Strings.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 13B13C2F2B66C2F000F9BCBB /* Strings.cpp */; };
 		13C21F9A2A7829C80067CE22 /* Preprocessor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 13C21F982A7829C80067CE22 /* Preprocessor.cpp */; };
@@ -32,8 +31,6 @@
 		130342CC2A7DDBB900142B74 /* build.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = build.txt; sourceTree = "<group>"; };
 		1308E8F42AC48F20001EEC82 /* Singleton.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Singleton.cpp; sourceTree = "<group>"; };
 		1308E8F52AC48F20001EEC82 /* Singleton.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = Singleton.hpp; sourceTree = "<group>"; };
-		1308E8F72AC6FCC5001EEC82 /* Comments.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Comments.cpp; sourceTree = "<group>"; };
-		1308E8F82AC6FCC5001EEC82 /* Comments.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = Comments.hpp; sourceTree = "<group>"; };
 		13166E852BA12E5E00D1E6F0 /* example */ = {isa = PBXFileReference; lastKnownFileType = folder; path = example; sourceTree = "<group>"; };
 		1351CC552BFC0E180073FEDF /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		1352EC512B350ECC003130E4 /* build.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = build.h; sourceTree = "<group>"; };
@@ -101,7 +98,6 @@
 				13C21F9F2A783EA20067CE22 /* include */,
 				13C21F982A7829C80067CE22 /* Preprocessor.cpp */,
 				13F1D8812AB6185400EF623A /* Aliases.cpp */,
-				1308E8F72AC6FCC5001EEC82 /* Comments.cpp */,
 				13B13C2F2B66C2F000F9BCBB /* Strings.cpp */,
 			);
 			name = Classes;
@@ -112,7 +108,6 @@
 			children = (
 				13C21F992A7829C80067CE22 /* Preprocessor.hpp */,
 				13F1D8822AB6185400EF623A /* Aliases.hpp */,
-				1308E8F82AC6FCC5001EEC82 /* Comments.hpp */,
 				13B13C302B66C2F000F9BCBB /* Strings.hpp */,
 			);
 			name = include;
@@ -203,7 +198,6 @@
 				13C21F9D2A783D8D0067CE22 /* common.cpp in Sources */,
 				13F1D8832AB6185400EF623A /* Aliases.cpp in Sources */,
 				1308E8F62AC48F20001EEC82 /* Singleton.cpp in Sources */,
-				1308E8F92AC6FCC5001EEC82 /* Comments.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

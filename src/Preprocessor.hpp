@@ -1,5 +1,5 @@
 /*
- Copyright © 2023 Insoft. All rights reserved.
+ Copyright © 2024 Insoft. All rights reserved.
  
  Permission is hereby granted, free of charge, to any person obtaining a copy
  of this software and associated documentation files (the "Software"), to deal
@@ -25,25 +25,15 @@
 
 #include "Aliases.hpp"
 
-namespace pp {
+namespace ppl {
 
 class Preprocessor {
 public:
-    std::string path;       // path for #include <‘filename‘>
-    std::string pathname;
-    
+
     bool verbose = false;
-    
-    bool disregard = false;
     bool python = false;
-    bool ppl = false;
-    bool operators = true;
-    
     
     bool parse(std::string &str);
-    
-private:
-    std::list<std::string> _nesting;
 };
 
 }

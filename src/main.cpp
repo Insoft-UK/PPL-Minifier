@@ -37,9 +37,7 @@
 
 #include "build.h"
 
-
-/// P+ code being reused in PPL Minimizer
-using namespace pp;
+using namespace ppl;
 
 static Preprocessor preprocessor = Preprocessor();
 static Strings strings = Strings();
@@ -132,6 +130,58 @@ uint32_t utf8_to_utf16(const char *str) {
     return utf16;
 }
 
+//void utf16_to_utf8(uint16_t utf16, char *outStr) {
+//    if (utf16 < 0x0080) {
+//        // 1-byte UTF-8 (ASCII)
+//        outStr[0] = (char)utf16;
+//        outStr[1] = '\0';  // Null-terminate the string
+//    }
+//    else if (utf16 < 0x0800) {
+//        // 2-byte UTF-8: 110xxxxx 10xxxxxx
+//        outStr[0] = (char)(0b11000000 | (utf16 >> 6));       // First 5 bits
+//        outStr[1] = (char)(0b10000000 | (utf16 & 0b00111111)); // Last 6 bits
+//        outStr[2] = '\0';  // Null-terminate the string
+//    }
+//    else {
+//        // 3-byte UTF-8: 1110xxxx 10xxxxxx 10xxxxxx
+//        outStr[0] = (char)(0b11100000 | (utf16 >> 12));      // First 4 bits
+//        outStr[1] = (char)(0b10000000 | ((utf16 >> 6) & 0b00111111)); // Middle 6 bits
+//        outStr[2] = (char)(0b10000000 | (utf16 & 0b00111111)); // Last 6 bits
+//        outStr[3] = '\0';  // Null-terminate the string
+//    }
+//}
+
+
+std::string utf16_to_utf8(const uint16_t* utf16_str, size_t utf16_size) {
+    std::string utf8_str;
+    
+    for (size_t i = 0; i < utf16_size; ++i) {
+        uint16_t utf16_char = utf16_str[i];
+        
+//#ifdef __LITTLE_ENDIAN__
+//        utf16_char = utf16_char >> 8 | utf16_char << 8;
+//#endif
+
+        if (utf16_char < 0x0080) {
+            // 1-byte UTF-8
+            utf8_str += static_cast<char>(utf16_char);
+        }
+        else if (utf16_char < 0x0800) {
+            // 2-byte UTF-8
+            utf8_str += static_cast<char>(0xC0 | ((utf16_char >> 6) & 0x1F));
+            utf8_str += static_cast<char>(0x80 | (utf16_char & 0x3F));
+        }
+        else {
+            // 3-byte UTF-8
+            utf8_str += static_cast<char>(0xE0 | ((utf16_char >> 12) & 0x0F));
+            utf8_str += static_cast<char>(0x80 | ((utf16_char >> 6) & 0x3F));
+            utf8_str += static_cast<char>(0x80 | (utf16_char & 0x3F));
+        }
+    }
+    
+    return utf8_str;
+}
+
 
 
 // MARK: - Pre-Processing...
@@ -140,8 +190,6 @@ void processLine(const std::string& str, std::ofstream &outfile)
 {
     Singleton& singleton = *Singleton::shared();
     std::string ln = str;
-    
-    ln = regex_replace(ln, std::regex(R"(\xFF\xFE)"), "");
     
     preProcess(ln, outfile);
 
@@ -179,8 +227,17 @@ void processLines(std::ifstream &infile, std::ofstream &outfile)
 {
     std::string s;
     
-    while(getline(infile, s)) {
-        processLine(s, outfile);
+    char c;
+    while (!infile.eof()) {
+        infile.get(c);
+        s += c;
+        if (c == 0x0A) {
+            infile.seekg(1, std::ios_base::cur);
+            processLine(s, outfile);
+            s = std::string("");
+        }
+        
+        infile.peek();
     }
 }
 
@@ -202,6 +259,8 @@ void process(const std::string &pathname, std::ofstream &outfile)
     
     infile.open(pathname,std::ios::in);
     if (!infile.is_open()) exit(2);
+    
+    infile.seekg(2);
     
     processLines(infile, outfile);
     
@@ -234,26 +293,15 @@ void preProcess(std::string &ln, std::ofstream &outfile) {
     
     static int variableAliasCount = -1, functionAliasCount = -1;
     
+    
+    uint16_t *utf16_str = (uint16_t *)ln.c_str();
+    ln = utf16_to_utf8(utf16_str, ln.size() / 2);
+    
+    
+    
+    
+    
     ln = regex_replace(ln, std::regex(R"(\t)"), " "); // Convert all Tabs to spaces :- future reg-ex will not require to deal with '\t', only spaces.
-    ln = regex_replace(ln, std::regex(R"(\x00)"), ""); // Remove all leading nulls as .hpprgm file is UTF-16LE
-    
-    /*
-     While parsing the contents, strings may inadvertently undergo parsing, leading to potential disruptions in the string's content.
-     To address this issue, we prioritize the preservation of any existing strings. Subsequently, after parsing, any strings that have
-     been universally altered can be restored to their original state.
-     */
-    strings.preserveStrings(ln);
-    
-    if (preprocessor.disregard == true) {
-        preprocessor.parse(ln);
-        ln = std::string("");
-        return;
-    }
-    
-    
-    singleton->comments.removeComment(ln);
-    
-    
     
     if (preprocessor.python) {
         // We're presently handling Python code.
@@ -268,14 +316,22 @@ void preProcess(std::string &ln, std::ofstream &outfile) {
             ln += '\n';
             return;
         }
-
-        if (!preprocessor.pathname.empty()) {
-            // Flagged with #include preprocessor for file inclusion, we process it before continuing.
-            process(preprocessor.pathname, outfile);
-        }
-
+        
         ln = std::string("");
         return;
+    }
+    
+    /*
+     While parsing the contents, strings may inadvertently undergo parsing, leading to potential disruptions in the string's content.
+     To address this issue, we prioritize the preservation of any existing strings. Subsequently, after parsing, any strings that have
+     been universally altered can be restored to their original state.
+     */
+    strings.preserveStrings(ln);
+    
+    // Remove any comments.
+    size_t pos = ln.find("//");
+    if (pos != std::string::npos) {
+        ln.resize(pos);
     }
 
     
@@ -382,6 +438,7 @@ void preProcess(std::string &ln, std::ofstream &outfile) {
     strings.restoreStrings(ln);
     
     ln += '\n';
+    ln = regex_replace(ln, std::regex(R"(; +)"), ";");
     ln = regex_replace(ln, std::regex(R"(;\n$)"), ";");
 }
 

@@ -53,11 +53,8 @@ std::string& strip(std::string &str);
 std::string strip_copy(const std::string &str);
 
 std::ifstream::pos_type file_size(const std::string &filename);
-bool file_exists(const char *filename);
-bool file_exists(const std::string &filename);
-
-long lwspaces(const std::string &str);
-std::string& lpad(std::string &str, const char c, int n);
+//bool file_exists(const char *filename);
+//bool file_exists(const std::string &filename);
 
 
 #endif /* common_hpp */

@@ -23,7 +23,7 @@
 #include "Strings.hpp"
 #include <regex>
 
-using namespace pp;
+using namespace ppl;
 
 void Strings::preserveStrings(const std::string &str) {
     _original = str;

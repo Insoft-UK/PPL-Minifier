@@ -108,38 +108,23 @@ std::ifstream::pos_type file_size(const std::string &filename)
     return pos;
 }
 
-bool file_exists(const char *filename) {
-    std::ifstream infile;
-    
-    infile.open(filename, std::ios::in);
-    if (infile.is_open()) {
-        infile.close();
-        return true;
-    }
-    
-    return false;
-}
+//bool file_exists(const char *filename) {
+//    std::ifstream infile;
+//    
+//    infile.open(filename, std::ios::in);
+//    if (infile.is_open()) {
+//        infile.close();
+//        return true;
+//    }
+//    
+//    return false;
+//}
+//
+//bool file_exists(const std::string &filename) {
+//    return file_exists(filename.c_str());
+//}
 
-bool file_exists(const std::string &filename) {
-    return file_exists(filename.c_str());
-}
 
-long lwspaces(const std::string &str) {
-    std::smatch m;
-    if (regex_search(str, m, std::regex(R"(^ *)"))) {
-        return m.length();
-    }
-    return 0;
-}
-
-std::string& lpad(std::string &str, const char c, int n) {
-    std::string s;
-    s = c;
-    while (n-- > 0) {
-        str.insert(0, s);
-    }
-    return str;
-}
 
 
 

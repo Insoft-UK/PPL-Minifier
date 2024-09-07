@@ -26,7 +26,7 @@
 #include <iostream>
 #include <list>
 
-namespace pp {
+namespace ppl {
 
 class Strings {
 private:

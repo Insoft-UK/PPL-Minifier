@@ -26,10 +26,9 @@
 #include <iostream>
 #include <vector>
 #include "Aliases.hpp"
-#include "Comments.hpp"
 #include "common.hpp"
 
-using namespace pp;
+using namespace ppl;
 
 class Singleton {
     
@@ -44,7 +43,6 @@ public:
     Scope scope = Scope::Global;
 
     Aliases aliases;
-    Comments comments;
     
     int nestingLevel = 0;
     
