@@ -86,71 +86,38 @@ void reduce(std::string &str) {
         }
     }
     
-    while (regex_search(str, m, std::regex(R"(\bfn\d+ *\()"))) {
-        std::string matched = m.str();
-        r = R"(\bfn(\d+) *\()";
-        auto it = std::sregex_token_iterator {
-            matched.begin(), matched.end(), r, {1}
-        };
-        if (it != std::sregex_token_iterator()) {
-            std::stringstream ss;
-            ss << "f" << *it << "(";
-            str = str.replace(m.position(), m.length(), ss.str());
+    if (Singleton::Scope::Local == Singleton::shared()->scope) {
+        while (regex_search(str, m, std::regex(R"(\b[A-Za-z]\w* *\( *\))"))) {
+            std::string matched = m.str();
+            matched = regex_replace(matched, std::regex(R"( *\( *\))"), "");
+            str = str.replace(m.position(), m.length(), matched);
         }
-    }
-    
-    while (regex_search(str, m, std::regex(R"(\b[A-Za-z]\w* *\( *\))"))) {
-        std::string matched = m.str();
-        matched = regex_replace(matched, std::regex(R"( *\( *\))"), "");
-        str = str.replace(m.position(), m.length(), matched);
     }
 }
 
-uint32_t utf8_to_utf16(const char *str) {
-    uint8_t *utf8 = (uint8_t *)str;
-    uint16_t utf16 = *utf8;
+uint32_t utf8_to_utf16(const char *utf8) {
+    uint8_t *utf8_char = (uint8_t *)utf8;
+    uint16_t utf16_char = *utf8_char;
     
-    if ((utf8[0] & 0b11110000) == 0b11100000) {
-        utf16 = utf8[0] & 0b11111;
-        utf16 <<= 6;
-        utf16 |= utf8[1] & 0b111111;
-        utf16 <<= 6;
-        utf16 |= utf8[2] & 0b111111;
-        return utf16;
+    if ((utf8_char[0] & 0b11110000) == 0b11100000) {
+        utf16_char = utf8_char[0] & 0b11111;
+        utf16_char <<= 6;
+        utf16_char |= utf8_char[1] & 0b111111;
+        utf16_char <<= 6;
+        utf16_char |= utf8_char[2] & 0b111111;
+        return utf16_char;
     }
     
     // 110xxxxx 10xxxxxx
-    if ((utf8[0] & 0b11100000) == 0b11000000) {
-        utf16 = utf8[0] & 0b11111;
-        utf16 <<= 6;
-        utf16 |= utf8[1] & 0b111111;
-        return utf16;
+    if ((utf8_char[0] & 0b11100000) == 0b11000000) {
+        utf16_char = utf8_char[0] & 0b11111;
+        utf16_char <<= 6;
+        utf16_char |= utf8_char[1] & 0b111111;
+        return utf16_char;
     }
     
-    return utf16;
+    return utf16_char;
 }
-
-//void utf16_to_utf8(uint16_t utf16, char *outStr) {
-//    if (utf16 < 0x0080) {
-//        // 1-byte UTF-8 (ASCII)
-//        outStr[0] = (char)utf16;
-//        outStr[1] = '\0';  // Null-terminate the string
-//    }
-//    else if (utf16 < 0x0800) {
-//        // 2-byte UTF-8: 110xxxxx 10xxxxxx
-//        outStr[0] = (char)(0b11000000 | (utf16 >> 6));       // First 5 bits
-//        outStr[1] = (char)(0b10000000 | (utf16 & 0b00111111)); // Last 6 bits
-//        outStr[2] = '\0';  // Null-terminate the string
-//    }
-//    else {
-//        // 3-byte UTF-8: 1110xxxx 10xxxxxx 10xxxxxx
-//        outStr[0] = (char)(0b11100000 | (utf16 >> 12));      // First 4 bits
-//        outStr[1] = (char)(0b10000000 | ((utf16 >> 6) & 0b00111111)); // Middle 6 bits
-//        outStr[2] = (char)(0b10000000 | (utf16 & 0b00111111)); // Last 6 bits
-//        outStr[3] = '\0';  // Null-terminate the string
-//    }
-//}
-
 
 std::string utf16_to_utf8(const uint16_t* utf16_str, size_t utf16_size) {
     std::string utf8_str;
@@ -158,9 +125,9 @@ std::string utf16_to_utf8(const uint16_t* utf16_str, size_t utf16_size) {
     for (size_t i = 0; i < utf16_size; ++i) {
         uint16_t utf16_char = utf16_str[i];
         
-//#ifdef __LITTLE_ENDIAN__
-//        utf16_char = utf16_char >> 8 | utf16_char << 8;
-//#endif
+#ifndef __LITTLE_ENDIAN__
+        utf16_char = utf16_char >> 8 | utf16_char << 8;
+#endif
 
         if (utf16_char < 0x0080) {
             // 1-byte UTF-8
@@ -182,7 +149,27 @@ std::string utf16_to_utf8(const uint16_t* utf16_str, size_t utf16_size) {
     return utf8_str;
 }
 
+// TODO: .hpprgrm file format detection and handling.
+bool isHPPrgrmFileFormat(std::ifstream &infile)
+{
+    return false;
+}
 
+bool isUTF16le(std::ifstream &infile)
+{
+    if (!infile.is_open()) return false;
+    
+    uint16_t word;
+    infile.read((char *)&word, 2);
+    
+#ifdef __LITTLE_ENDIAN__
+    word = word >> 8 | word << 8;
+#endif
+    if (word == 0xFFFE) return true;
+    
+    infile.seekg(0);
+    return false;
+}
 
 // MARK: - Pre-Processing...
 
@@ -192,12 +179,6 @@ void processLine(const std::string& str, std::ofstream &outfile)
     std::string ln = str;
     
     preProcess(ln, outfile);
-
-    
-    
-
-//    minifier(ln);
-//    reduce(ln);
     
     for ( int n = 0; n < ln.length(); n++) {
         uint8_t *ascii = (uint8_t *)&ln.at(n);
@@ -250,22 +231,14 @@ void processStringLines(std::istringstream &iss, std::ofstream &outfile)
     }
 }
 
-void process(const std::string &pathname, std::ofstream &outfile)
+void process(std::ifstream &infile, std::ofstream &outfile)
 {
-    Singleton& singleton = *Singleton::shared();
-    std::ifstream infile;
-
-    singleton.pushPathname(pathname);
-    
-    infile.open(pathname,std::ios::in);
-    if (!infile.is_open()) exit(2);
-    
-    infile.seekg(2);
-    
+    if (!isUTF16le(infile)) {
+        infile.close();
+        return;
+    }
+   
     processLines(infile, outfile);
-    
-    infile.close();
-    singleton.popPathname();
 }
 
 
@@ -293,14 +266,11 @@ void preProcess(std::string &ln, std::ofstream &outfile) {
     
     static int variableAliasCount = -1, functionAliasCount = -1;
     
-    
+    // The UTF16-LE first needs to be converted to UTF8 before it can be proccessed.
     uint16_t *utf16_str = (uint16_t *)ln.c_str();
     ln = utf16_to_utf8(utf16_str, ln.size() / 2);
     
-    
-    
-    
-    
+    // To simplifie reg-ex we need to deal with any tabs used in the UTF8 data.
     ln = regex_replace(ln, std::regex(R"(\t)"), " "); // Convert all Tabs to spaces :- future reg-ex will not require to deal with '\t', only spaces.
     
     if (preprocessor.python) {
@@ -334,7 +304,7 @@ void preProcess(std::string &ln, std::ofstream &outfile) {
         ln.resize(pos);
     }
 
-    
+    // Remove any leading white spaces before or after.
     trim(ln);
     
     ln = std::regex_replace(ln, std::regex(R"(  +)"), " ");
@@ -369,7 +339,7 @@ void preProcess(std::string &ln, std::ofstream &outfile) {
     ln = regex_replace(ln, std::regex(R"( *== *)"), "==");
 
     
-    reduce(ln);
+//    reduce(ln);
     
     if (regex_match(ln, std::regex(R"(\bBEGIN\b)", std::regex_constants::icase))) {
         singleton->aliases.removeAllLocalAliases();
@@ -434,6 +404,8 @@ void preProcess(std::string &ln, std::ofstream &outfile) {
     }
     
     ln = singleton->aliases.resolveAliasesInText(ln);
+    
+    reduce(ln);
     
     strings.restoreStrings(ln);
     
@@ -517,6 +489,14 @@ int main(int argc, char **argv) {
         return 0;
     }
     
+    std::ifstream infile;
+    infile.open(in_filename, std::ios::in | std::ios::binary);
+    if(!infile.is_open())
+    {
+        outfile.close();
+        error();
+        return 0;
+    }
     
     // The "hpprgm" file format requires UTF-16LE.
     
@@ -530,8 +510,9 @@ int main(int argc, char **argv) {
     
     std::string str;
 
-    
-    process( in_filename, outfile );
+//    Singleton::shared()->pushPathname(in_filename);
+    process( infile, outfile );
+//    Singleton::shared()->popPathname();
     
     // Stop measuring time and calculate the elapsed time.
     clock_gettime(CLOCK_MONOTONIC, &end);
@@ -540,6 +521,7 @@ int main(int argc, char **argv) {
     double delta_us = (end.tv_sec - start.tv_sec) * 1000000 + (end.tv_nsec - start.tv_nsec) / 1000;
     printf("Completed in %.3f seconds.\n", delta_us * 1e-6);
     
+    infile.close();
     outfile.close();
     
     if (hasErrors() == true) {
@@ -554,7 +536,7 @@ int main(int argc, char **argv) {
     
     std::ifstream::pos_type insize = file_size(in_filename);
     std::ifstream::pos_type outsize = file_size(out_filename);
-    std::cout << "File size reduction of " << insize - outsize << " bytes.\n";
+    std::cout << "File reduction of " << insize - outsize << " bytes.\n";
     
     std::cout << "UTF-16LE File '" << out_filename << "' Succefuly Created.\n";
     
