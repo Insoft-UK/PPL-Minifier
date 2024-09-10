@@ -149,23 +149,62 @@ std::string utf16_to_utf8(const uint16_t* utf16_str, size_t utf16_size) {
     return utf8_str;
 }
 
+template <typename T>
+T swap_endian(T u)
+{
+    static_assert (CHAR_BIT == 8, "CHAR_BIT != 8");
+
+    union
+    {
+        T u;
+        unsigned char u8[sizeof(T)];
+    } source, dest;
+
+    source.u = u;
+
+    for (size_t k = 0; k < sizeof(T); k++)
+        dest.u8[k] = source.u8[sizeof(T) - k - 1];
+
+    return dest.u;
+}
+
 // TODO: .hpprgrm file format detection and handling.
 bool isHPPrgrmFileFormat(std::ifstream &infile)
 {
+    uint32_t u32;
+    infile.read((char *)&u32, sizeof(uint32_t));
+    
+#ifndef __LITTLE_ENDIAN__
+    u32 = swap_endian(u32);
+#endif
+    
+    if (u32 != 0x7C618AB2) {
+        goto invalid;
+    }
+    
+    while (!infile.eof()) {
+        infile.read((char *)&u32, sizeof(uint32_t));
+#ifndef __LITTLE_ENDIAN__
+    u32 = swap_endian(u32);
+#endif
+        if (u32 == 0x9B00C000) return true;
+        infile.peek();
+    }
+    
+invalid:
+    infile.seekg(0);
     return false;
 }
 
 bool isUTF16le(std::ifstream &infile)
 {
-    if (!infile.is_open()) return false;
+    uint16_t byte_order_mark;
+    infile.read((char *)&byte_order_mark, sizeof(uint16_t));
     
-    uint16_t word;
-    infile.read((char *)&word, 2);
-    
-#ifdef __LITTLE_ENDIAN__
-    word = word >> 8 | word << 8;
+#ifndef __LITTLE_ENDIAN__
+    byte_order_mark = byte_order_mark >> 8 | byte_order_mark << 8;
 #endif
-    if (word == 0xFFFE) return true;
+    if (byte_order_mark == 0xFEFF) return true;
     
     infile.seekg(0);
     return false;
