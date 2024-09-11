@@ -212,10 +212,42 @@ bool isUTF16le(std::ifstream &infile)
     return false;
 }
 
+// Function to remove whitespaces around specific operators using regular expressions
+std::string removeWhitespaceAroundOperators(const std::string& str) {
+    // Regular expression pattern to match spaces around the specified operators
+    // Operators: {}[]()≤≥≠<>=*/+-▶.,;:!^
+    std::regex r(R"(\s*([{}[\]()≤≥≠<>=*/+\-▶.,;:!^])\s*)");
+
+    // Replace matches with the operator and no surrounding spaces
+    std::string result = std::regex_replace(str, r, "$1");
+
+    return result;
+}
+
+std::string base10ToBase36(unsigned int num) {
+    if (num == 0) {
+        return "0";  // Edge case: if the number is 0, return "0"
+    }
+
+    std::string result;
+    const char digits[] = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";  // Base-36 digits
+    
+    // Keep dividing the number by 36 and store the remainders
+    while (num > 0) {
+        int remainder = num % 36;  // Get the current base-36 digit
+        result += digits[remainder];  // Add the corresponding character
+        num /= 36;  // Reduce the number
+    }
+
+    // The digits are accumulated in reverse order, so reverse the result string
+    std::reverse(result.begin(), result.end());
+
+    return result;
+}
+
 // MARK: - Pre-Processing...
 
-void processLine(const std::string& str, std::ofstream &outfile)
-{
+void processLine(const std::string& str, std::ofstream& outfile) {
     Singleton& singleton = *Singleton::shared();
     std::string ln = str;
     
@@ -305,14 +337,15 @@ void preProcess(std::string &ln, std::ofstream &outfile) {
     
     Singleton *singleton = Singleton::shared();
     
-    static int variableAliasCount = -1, functionAliasCount = -1;
+    static int globalVariableAliasCount = -1, variableAliasCount = -1, functionAliasCount = -1;
     
     // The UTF16-LE first needs to be converted to UTF8 before it can be proccessed.
     uint16_t *utf16_str = (uint16_t *)ln.c_str();
     ln = utf16_to_utf8(utf16_str, ln.size() / 2);
     
     // To simplifie reg-ex we need to deal with any tabs used in the UTF8 data.
-    ln = regex_replace(ln, std::regex(R"(\t)"), " "); // Convert all Tabs to spaces :- future reg-ex will not require to deal with '\t', only spaces.
+//    ln = regex_replace(ln, std::regex(R"(\t)"), " "); // Convert all Tabs to spaces :- future reg-ex will not require to deal with '\t', only spaces.
+    
     
     if (preprocessor.python) {
         // We're presently handling Python code.
@@ -344,6 +377,9 @@ void preProcess(std::string &ln, std::ofstream &outfile) {
     if (pos != std::string::npos) {
         ln.resize(pos);
     }
+    
+    // Remove sequences of whitespaces to a single whitespace.
+    ln = std::regex_replace(ln, std::regex(R"(\s+)"), " ");
 
     // Remove any leading white spaces before or after.
     trim(ln);
@@ -353,36 +389,41 @@ void preProcess(std::string &ln, std::ofstream &outfile) {
         return;
     }
     
-    ln = std::regex_replace(ln, std::regex(R"(  +)"), " ");
+    ln = removeWhitespaceAroundOperators(ln);
     
     ln = regex_replace(ln, std::regex(R"(>=)"), "≥");
     ln = regex_replace(ln, std::regex(R"(<=)"), "≤");
     ln = regex_replace(ln, std::regex(R"(<>)"), "≠");
+ 
     
-    ln = std::regex_replace(ln, std::regex(R"( *\[ *)"), "[");
-    ln = std::regex_replace(ln, std::regex(R"( *\] *)"), "]");
-    ln = std::regex_replace(ln, std::regex(R"( *\{ *)"), "{");
-    ln = std::regex_replace(ln, std::regex(R"( *\} *)"), "}");
-    ln = std::regex_replace(ln, std::regex(R"( *\( *)"), "(");
-    ln = std::regex_replace(ln, std::regex(R"( *\) *)"), ")");
     
-    ln = regex_replace(ln, std::regex(R"( *> *)"), ">");
-    ln = regex_replace(ln, std::regex(R"( *< *)"), "<");
-    ln = regex_replace(ln, std::regex(R"( *≥ *)"), "≥");
-    ln = regex_replace(ln, std::regex(R"( *≤ *)"), "≤");
-    ln = regex_replace(ln, std::regex(R"( *≠ *)"), "≠");
-
-    ln = regex_replace(ln, std::regex(R"( *▶ *)"), "▶");
-    ln = regex_replace(ln, std::regex(R"( *\, *)"), ",");
-    
-    ln = regex_replace(ln, std::regex(R"( *\+ *)"), "+");
-    ln = regex_replace(ln, std::regex(R"( *- *)"), "-");
-    ln = regex_replace(ln, std::regex(R"( *\/ *)"), "/");
-    ln = regex_replace(ln, std::regex(R"( *\* *)"), "*");
-    
-    ln = regex_replace(ln, std::regex(R"( *:= *)"), ":=");
-    ln = regex_replace(ln, std::regex(R"( *= *)"), "=");
-    ln = regex_replace(ln, std::regex(R"( *== *)"), "==");
+//    ln = std::regex_replace(ln, std::regex(R"( *\[ *)"), "[");
+//    ln = std::regex_replace(ln, std::regex(R"( *\] *)"), "]");
+//    ln = std::regex_replace(ln, std::regex(R"( *\{ *)"), "{");
+//    ln = std::regex_replace(ln, std::regex(R"( *\} *)"), "}");
+//    ln = std::regex_replace(ln, std::regex(R"( *\( *)"), "(");
+//    ln = std::regex_replace(ln, std::regex(R"( *\) *)"), ")");
+//    
+//    ln = regex_replace(ln, std::regex(R"( *> *)"), ">");
+//    ln = regex_replace(ln, std::regex(R"( *< *)"), "<");
+//    ln = regex_replace(ln, std::regex(R"( *≥ *)"), "≥");
+//    ln = regex_replace(ln, std::regex(R"( *≤ *)"), "≤");
+//    ln = regex_replace(ln, std::regex(R"( *≠ *)"), "≠");
+//
+//    ln = regex_replace(ln, std::regex(R"( *▶ *)"), "▶");
+//    ln = regex_replace(ln, std::regex(R"( *\, *)"), ",");
+//    
+//    ln = regex_replace(ln, std::regex(R"( *\+ *)"), "+");
+//    ln = regex_replace(ln, std::regex(R"( *- *)"), "-");
+//    ln = regex_replace(ln, std::regex(R"( *\/ *)"), "/");
+//    ln = regex_replace(ln, std::regex(R"( *\* *)"), "*");
+//    
+//    ln = regex_replace(ln, std::regex(R"( *:= *)"), ":=");
+//    ln = regex_replace(ln, std::regex(R"( *= *)"), "=");
+//    ln = regex_replace(ln, std::regex(R"( *== *)"), "==");
+//    
+//    ln = regex_replace(ln, std::regex(R"( *; *)"), ";");
+//    ln = regex_replace(ln, std::regex(R"( *, *)"), ",");
 
     
     
@@ -432,46 +473,49 @@ void preProcess(std::string &ln, std::ofstream &outfile) {
             identity.type = Aliases::Type::Variable;
             identity.identifier = m.str(1);
             
-            std::ostringstream os;
-            os << "v" << ++variableAliasCount;
-            identity.real = os.str();
+//            std::ostringstream os;
+//            os << "v" << ++variableAliasCount;
+//            identity.real = os.str();
+            
+            identity.real = "g" + base10ToBase36(++globalVariableAliasCount);// = os.str();
+            
             
             singleton->aliases.append(identity);
         }
     }
     
     if (Singleton::Scope::Local == singleton->scope) {
-        // LOCAL
-        r = R"(\bLOCAL (?:[A-Za-z]\w*[,;])+)";
-        if (regex_search(ln, m, r)) {
-            std::string matched = m.str();
-            r = R"([A-Za-z]\w*(?=[,;]))";
-            
-            for(auto it = std::sregex_iterator(matched.begin(), matched.end(), r); it != std::sregex_iterator(); ++it) {
-                if (it->str().length() < 3) continue;
-                Aliases::TIdentity identity;
-                identity.scope = Aliases::Scope::Local;
-                identity.type = Aliases::Type::Variable;
-                identity.identifier = it->str();
-                
-                std::ostringstream os;
-                os << "v" << ++variableAliasCount;
-                identity.real = os.str();
-                
-                singleton->aliases.append(identity);
-            }
-        }
+//        // LOCAL
+//        r = R"(\bLOCAL (?:[A-Za-z]\w*[,;])+)";
+//        if (regex_search(ln, m, r)) {
+//            std::string matched = m.str();
+//            r = R"([A-Za-z]\w*(?=[,;]))";
+//            
+//            for(auto it = std::sregex_iterator(matched.begin(), matched.end(), r); it != std::sregex_iterator(); ++it) {
+//                if (it->str().length() < 3) continue;
+//                Aliases::TIdentity identity;
+//                identity.scope = Aliases::Scope::Local;
+//                identity.type = Aliases::Type::Variable;
+//                identity.identifier = it->str();
+//                
+//                std::ostringstream os;
+//                os << "v" << ++variableAliasCount;
+//                identity.real = os.str();
+//                
+//                singleton->aliases.append(identity);
+//            }
+//        }
         
-        r = R"(\bLOCAL +([A-Za-z]\w*)(?: *:= *.*);)";
+        r = R"(\bLOCAL +([A-Za-z]\w*)(?::=))";
         if (regex_search(ln, m, r)) {
             Aliases::TIdentity identity;
             identity.scope = Aliases::Scope::Local;
             identity.type = Aliases::Type::Variable;
             identity.identifier = m.str(1);
             
-            std::ostringstream os;
-            os << "v" << ++variableAliasCount;
-            identity.real = os.str();
+//            std::ostringstream os;
+//            os << "v" << ++variableAliasCount;
+            identity.real = "v" + base10ToBase36(++variableAliasCount);// = os.str();
             
             singleton->aliases.append(identity);
         }
@@ -480,15 +524,18 @@ void preProcess(std::string &ln, std::ofstream &outfile) {
     
     ln = singleton->aliases.resolveAliasesInText(ln);
     
-    reduce(ln);
+//    reduce(ln);
     
     strings.restoreStrings(ln);
     
-    ln += '\n';
-    ln = regex_replace(ln, std::regex(R"( *; *)"), ";");
-    ln = regex_replace(ln, std::regex(R"( *, *)"), ",");
-    ln = regex_replace(ln, std::regex(R"(;\n$)"), ";");
-    ln = regex_replace(ln, std::regex(R"(,\n$)"), ",");
+    ln = regex_replace(ln, std::regex(R"([^;,]$)"), "$0\n");
+    
+//    ln += '\n';
+//    
+//    ln = regex_replace(ln, std::regex(R"(;\n$)"), ";");
+//    ln = regex_replace(ln, std::regex(R"(,\n$)"), ",");
+    
+    
 }
 
 // MARK: - Command Line
