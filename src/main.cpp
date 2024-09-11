@@ -66,27 +66,29 @@ void reduce(std::string &str) {
     if (regex_search(str, std::regex(R"(LOCAL .*)")))
         return;
     
-    while (regex_search(str, m, std::regex(R"([A-Za-z]\w*:=[^;]*)"))) {
-        std::string matched = m.str();
-        
-        /*
-         eg. v1:=v2+v4;
-         Group  0 v1:=v2+v4;
-                1 v1
-                2 v2+v4
-        */
-        r = R"(([A-Za-z]\w*):=(.*))";
-        auto it = std::sregex_token_iterator {
-            matched.begin(), matched.end(), r, {2, 1}
-        };
-        if (it != std::sregex_token_iterator()) {
-            std::stringstream ss;
-            ss << *it++ << "▶" << *it;
-            str = str.replace(m.position(), m.length(), ss.str());
-        }
-    }
+    
     
     if (Singleton::Scope::Local == Singleton::shared()->scope) {
+//        while (regex_search(str, m, std::regex(R"([A-Za-z]\w*:=[^;]*)"))) {
+//            std::string matched = m.str();
+//            
+//            /*
+//             eg. v1:=v2+v4;
+//             Group  0 v1:=v2+v4;
+//                    1 v1
+//                    2 v2+v4
+//            */
+//            r = R"(([A-Za-z]\w*):=(.*);)";
+//            auto it = std::sregex_token_iterator {
+//                matched.begin(), matched.end(), r, {2, 1}
+//            };
+//            if (it != std::sregex_token_iterator()) {
+//                std::stringstream ss;
+//                ss << *it++ << "▶" << *it;
+//                str = str.replace(m.position(), m.length(), ss.str());
+//            }
+//        }
+        
         while (regex_search(str, m, std::regex(R"(\b[A-Za-z]\w* *\( *\))"))) {
             std::string matched = m.str();
             matched = regex_replace(matched, std::regex(R"( *\( *\))"), "");
@@ -346,11 +348,16 @@ void preProcess(std::string &ln, std::ofstream &outfile) {
     // Remove any leading white spaces before or after.
     trim(ln);
     
+    if (ln.length() < 1) {
+        ln = std::string("");
+        return;
+    }
+    
     ln = std::regex_replace(ln, std::regex(R"(  +)"), " ");
     
     ln = regex_replace(ln, std::regex(R"(>=)"), "≥");
     ln = regex_replace(ln, std::regex(R"(<=)"), "≤");
-    ln = regex_replace(ln, std::regex(R"(!=)"), "≠");
+    ln = regex_replace(ln, std::regex(R"(<>)"), "≠");
     
     ln = std::regex_replace(ln, std::regex(R"( *\[ *)"), "[");
     ln = std::regex_replace(ln, std::regex(R"( *\] *)"), "]");
@@ -378,7 +385,6 @@ void preProcess(std::string &ln, std::ofstream &outfile) {
     ln = regex_replace(ln, std::regex(R"( *== *)"), "==");
 
     
-//    reduce(ln);
     
     if (regex_match(ln, std::regex(R"(\bBEGIN\b)", std::regex_constants::icase))) {
         singleton->aliases.removeAllLocalAliases();
@@ -399,6 +405,7 @@ void preProcess(std::string &ln, std::ofstream &outfile) {
         }
     }
     
+    
     if (Singleton::Scope::Global == singleton->scope) {
         // LOCAL
         ln = regex_replace(ln, std::regex(R"(\bLOCAL +)"), "");
@@ -413,6 +420,20 @@ void preProcess(std::string &ln, std::ofstream &outfile) {
             
             std::ostringstream os;
             os << "f" << ++functionAliasCount;
+            identity.real = os.str();
+            
+            singleton->aliases.append(identity);
+        }
+        
+        r = R"(\b(?:LOCAL +)?([A-Za-z]\w*)(?: *:= *.*);)";
+        if (regex_search(ln, m, r)) {
+            Aliases::TIdentity identity;
+            identity.scope = Aliases::Scope::Global;
+            identity.type = Aliases::Type::Variable;
+            identity.identifier = m.str(1);
+            
+            std::ostringstream os;
+            os << "v" << ++variableAliasCount;
             identity.real = os.str();
             
             singleton->aliases.append(identity);
@@ -440,6 +461,21 @@ void preProcess(std::string &ln, std::ofstream &outfile) {
                 singleton->aliases.append(identity);
             }
         }
+        
+        r = R"(\bLOCAL +([A-Za-z]\w*)(?: *:= *.*);)";
+        if (regex_search(ln, m, r)) {
+            Aliases::TIdentity identity;
+            identity.scope = Aliases::Scope::Local;
+            identity.type = Aliases::Type::Variable;
+            identity.identifier = m.str(1);
+            
+            std::ostringstream os;
+            os << "v" << ++variableAliasCount;
+            identity.real = os.str();
+            
+            singleton->aliases.append(identity);
+        }
+        
     }
     
     ln = singleton->aliases.resolveAliasesInText(ln);
@@ -449,8 +485,10 @@ void preProcess(std::string &ln, std::ofstream &outfile) {
     strings.restoreStrings(ln);
     
     ln += '\n';
-    ln = regex_replace(ln, std::regex(R"(; +)"), ";");
+    ln = regex_replace(ln, std::regex(R"( *; *)"), ";");
+    ln = regex_replace(ln, std::regex(R"( *, *)"), ",");
     ln = regex_replace(ln, std::regex(R"(;\n$)"), ";");
+    ln = regex_replace(ln, std::regex(R"(,\n$)"), ",");
 }
 
 // MARK: - Command Line

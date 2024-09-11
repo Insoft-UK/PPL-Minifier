@@ -56,7 +56,7 @@ bool Aliases::append(const TIdentity &idty) {
     
     if (exists(identity) == true) {
         for (const auto &it : identities) {
-            if (it.identifier == identity.identifier) {
+            if (it.identifier == identity.identifier && identity.type != Type::Function) {
                 std::cout
                 << MessageType::Warning
                 << "redefinition of: "
