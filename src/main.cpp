@@ -351,6 +351,7 @@ void preProcess(std::string &ln, std::ofstream &outfile) {
     ln = regex_replace(ln, std::regex(R"(>=)"), "≥");
     ln = regex_replace(ln, std::regex(R"(<=)"), "≤");
     ln = regex_replace(ln, std::regex(R"(<>)"), "≠");
+    ln = regex_replace(ln, std::regex(R"(==)"), "=");
     
     r = std::regex(R"(\b(?:BEGIN|IF|CASE|FOR|WHILE|REPEAT|FOR|WHILE|REPEAT)\b)", std::regex_constants::icase);
     for(auto it = std::sregex_iterator(ln.begin(), ln.end(), r); it != std::sregex_iterator(); ++it) {
@@ -390,6 +391,7 @@ void preProcess(std::string &ln, std::ofstream &outfile) {
             identity.type = Aliases::Type::Property;
             r = R"([A-Za-z]\w*)";
             for(auto it = std::sregex_iterator(s.begin(), s.end(), r); it != std::sregex_iterator(); ++it) {
+                if (it->str().length() < 3) continue;
                 identity.identifier = it->str();
                 identity.real = "p" + base10ToBase32(++count);
                 
@@ -502,6 +504,17 @@ void usage(void) {
     std::cout << " --version         displays the full version number.\n";
 }
 
+// Custom facet to use comma as the thousands separator
+struct comma_numpunct : std::numpunct<char> {
+protected:
+    virtual char do_thousands_sep() const override {
+        return ',';  // Define the thousands separator as a comma
+    }
+
+    virtual std::string do_grouping() const override {
+        return "\3";  // Group by 3 digits
+    }
+};
 
 // MARK: - Main
 int main(int argc, char **argv) {
@@ -593,11 +606,18 @@ int main(int argc, char **argv) {
         Singleton::shared()->aliases.dumpIdentities();
     }
     
-    std::ifstream::pos_type insize = file_size(in_filename);
-    std::ifstream::pos_type outsize = file_size(out_filename);
-    std::cout << "File reduction of " << insize - outsize << " bytes.\n";
+    // Percentage Reduction = (Original Size - New Size) / Original Size * 100
+    std::ifstream::pos_type original_size = file_size(in_filename);
+    std::ifstream::pos_type new_size = file_size(out_filename);
     
-    std::cout << "UTF-16LE File '" << out_filename << "' Succefuly Created.\n";
+    // Create a locale with the custom comma-based numpunct
+    std::locale commaLocale(std::locale::classic(), new comma_numpunct);
+    std::cout.imbue(commaLocale);
+    
+    std::cout << "Reduction of " << (original_size - new_size) * 100 / original_size;
+    std::cout << "% or " << original_size - new_size << " bytes.\n";
+    
+    std::cout << "UTF-16LE file '" << regex_replace(out_filename, std::regex(R"(.*/)"), "") << "' succefuly created.\n";
     
     
     return 0;
