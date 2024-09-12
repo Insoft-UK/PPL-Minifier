@@ -57,45 +57,6 @@ void preProcess(std::string &ln, std::ofstream &outfile);
 // MARK: - Utills
 
 
-void reduce(std::string &str) {
-    std::regex r;
-    std::smatch m;
-    
-    str = std::regex_replace(str, std::regex(R"(==)"), "=");
-    
-    if (regex_search(str, std::regex(R"(LOCAL .*)")))
-        return;
-    
-    
-    
-    if (Singleton::Scope::Local == Singleton::shared()->scope) {
-//        while (regex_search(str, m, std::regex(R"([A-Za-z]\w*:=[^;]*)"))) {
-//            std::string matched = m.str();
-//            
-//            /*
-//             eg. v1:=v2+v4;
-//             Group  0 v1:=v2+v4;
-//                    1 v1
-//                    2 v2+v4
-//            */
-//            r = R"(([A-Za-z]\w*):=(.*);)";
-//            auto it = std::sregex_token_iterator {
-//                matched.begin(), matched.end(), r, {2, 1}
-//            };
-//            if (it != std::sregex_token_iterator()) {
-//                std::stringstream ss;
-//                ss << *it++ << "▶" << *it;
-//                str = str.replace(m.position(), m.length(), ss.str());
-//            }
-//        }
-        
-        while (regex_search(str, m, std::regex(R"(\b[A-Za-z]\w* *\( *\))"))) {
-            std::string matched = m.str();
-            matched = regex_replace(matched, std::regex(R"( *\( *\))"), "");
-            str = str.replace(m.position(), m.length(), matched);
-        }
-    }
-}
 
 uint32_t utf8_to_utf16(const char *utf8) {
     uint8_t *utf8_char = (uint8_t *)utf8;
@@ -224,19 +185,19 @@ std::string removeWhitespaceAroundOperators(const std::string& str) {
     return result;
 }
 
-std::string base10ToBase36(unsigned int num) {
+std::string base10ToBase32(unsigned int num) {
     if (num == 0) {
         return "0";  // Edge case: if the number is 0, return "0"
     }
 
     std::string result;
-    const char digits[] = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";  // Base-36 digits
+    const char digits[] = "0123456789ABCDEFGHIJKLMNabcdefgh";  // Base-32 digits
     
-    // Keep dividing the number by 36 and store the remainders
+    // Keep dividing the number by 32 and store the remainders
     while (num > 0) {
-        int remainder = num % 36;  // Get the current base-36 digit
+        int remainder = num % 32;  // Get the current base-32 digit
         result += digits[remainder];  // Add the corresponding character
-        num /= 36;  // Reduce the number
+        num /= 32;  // Reduce the number
     }
 
     // The digits are accumulated in reverse order, so reverse the result string
@@ -337,15 +298,11 @@ void preProcess(std::string &ln, std::ofstream &outfile) {
     
     Singleton *singleton = Singleton::shared();
     
-    static int globalVariableAliasCount = -1, variableAliasCount = -1, functionAliasCount = -1;
+    static int globalVariableAliasCount = -1, localVariableAliasCount = -1, functionAliasCount = -1;
     
-    // The UTF16-LE first needs to be converted to UTF8 before it can be proccessed.
+    // The UTF16-LE data first needs to be converted to UTF8 before it can be proccessed.
     uint16_t *utf16_str = (uint16_t *)ln.c_str();
     ln = utf16_to_utf8(utf16_str, ln.size() / 2);
-    
-    // To simplifie reg-ex we need to deal with any tabs used in the UTF8 data.
-//    ln = regex_replace(ln, std::regex(R"(\t)"), " "); // Convert all Tabs to spaces :- future reg-ex will not require to deal with '\t', only spaces.
-    
     
     if (preprocessor.python) {
         // We're presently handling Python code.
@@ -394,43 +351,6 @@ void preProcess(std::string &ln, std::ofstream &outfile) {
     ln = regex_replace(ln, std::regex(R"(>=)"), "≥");
     ln = regex_replace(ln, std::regex(R"(<=)"), "≤");
     ln = regex_replace(ln, std::regex(R"(<>)"), "≠");
- 
-    
-    
-//    ln = std::regex_replace(ln, std::regex(R"( *\[ *)"), "[");
-//    ln = std::regex_replace(ln, std::regex(R"( *\] *)"), "]");
-//    ln = std::regex_replace(ln, std::regex(R"( *\{ *)"), "{");
-//    ln = std::regex_replace(ln, std::regex(R"( *\} *)"), "}");
-//    ln = std::regex_replace(ln, std::regex(R"( *\( *)"), "(");
-//    ln = std::regex_replace(ln, std::regex(R"( *\) *)"), ")");
-//    
-//    ln = regex_replace(ln, std::regex(R"( *> *)"), ">");
-//    ln = regex_replace(ln, std::regex(R"( *< *)"), "<");
-//    ln = regex_replace(ln, std::regex(R"( *≥ *)"), "≥");
-//    ln = regex_replace(ln, std::regex(R"( *≤ *)"), "≤");
-//    ln = regex_replace(ln, std::regex(R"( *≠ *)"), "≠");
-//
-//    ln = regex_replace(ln, std::regex(R"( *▶ *)"), "▶");
-//    ln = regex_replace(ln, std::regex(R"( *\, *)"), ",");
-//    
-//    ln = regex_replace(ln, std::regex(R"( *\+ *)"), "+");
-//    ln = regex_replace(ln, std::regex(R"( *- *)"), "-");
-//    ln = regex_replace(ln, std::regex(R"( *\/ *)"), "/");
-//    ln = regex_replace(ln, std::regex(R"( *\* *)"), "*");
-//    
-//    ln = regex_replace(ln, std::regex(R"( *:= *)"), ":=");
-//    ln = regex_replace(ln, std::regex(R"( *= *)"), "=");
-//    ln = regex_replace(ln, std::regex(R"( *== *)"), "==");
-//    
-//    ln = regex_replace(ln, std::regex(R"( *; *)"), ";");
-//    ln = regex_replace(ln, std::regex(R"( *, *)"), ",");
-
-    
-    
-    if (regex_match(ln, std::regex(R"(\bBEGIN\b)", std::regex_constants::icase))) {
-        singleton->aliases.removeAllLocalAliases();
-        variableAliasCount = -1;
-    }
     
     r = std::regex(R"(\b(?:BEGIN|IF|CASE|FOR|WHILE|REPEAT|FOR|WHILE|REPEAT)\b)", std::regex_constants::icase);
     for(auto it = std::sregex_iterator(ln.begin(), ln.end(), r); it != std::sregex_iterator(); ++it) {
@@ -443,99 +363,114 @@ void preProcess(std::string &ln, std::ofstream &outfile) {
         singleton->nestingLevel--;
         if (0 == singleton->nestingLevel) {
             singleton->scope = Singleton::Scope::Global;
+            singleton->aliases.removeAllLocalAliases();
+            localVariableAliasCount = -1;
         }
     }
     
+    Aliases::TIdentity identity;
     
     if (Singleton::Scope::Global == singleton->scope) {
+        identity.scope = Aliases::Scope::Global;
+        
         // LOCAL
         ln = regex_replace(ln, std::regex(R"(\bLOCAL +)"), "");
         
         // Function
-        r = R"(^[A-Za-z]\w*\((?:[A-Za-z]\w*,?)*\))";
+        r = R"(^([A-Za-z]\w*)\(([\w,]*)\);?$)";
         if (regex_search(ln, m, r)) {
-            Aliases::TIdentity identity;
-            identity.scope = Aliases::Scope::Global;
             identity.type = Aliases::Type::Function;
-            identity.identifier = m.str().substr(0, m.str().find("("));
-            
-            std::ostringstream os;
-            os << "f" << ++functionAliasCount;
-            identity.real = os.str();
-            
+            identity.identifier = m.str(1);
+            identity.real = "f" + base10ToBase32(++functionAliasCount);
             singleton->aliases.append(identity);
+            
+            std::string s = m.str(2);
+            int count = -1;
+            identity.scope = Aliases::Scope::Local;
+            identity.type = Aliases::Type::Property;
+            r = R"([A-Za-z]\w*)";
+            for(auto it = std::sregex_iterator(s.begin(), s.end(), r); it != std::sregex_iterator(); ++it) {
+                identity.identifier = it->str();
+                identity.real = "p" + base10ToBase32(++count);
+                
+                if (ln.back() == ';') {
+                    ln = regex_replace(ln, std::regex(identity.identifier), identity.real);
+                } else {
+                    if (!singleton->aliases.exists(identity)) {
+                        singleton->aliases.append(identity);
+                    }
+                }
+            }
+            identity.scope = Aliases::Scope::Global;
         }
         
-        r = R"(\b(?:LOCAL +)?([A-Za-z]\w*)(?: *:= *.*);)";
+        
+        // Global Variable
+        r = R"(\b(?:LOCAL )?([A-Za-z]\w*)(?::=.*);)";
         if (regex_search(ln, m, r)) {
-            Aliases::TIdentity identity;
-            identity.scope = Aliases::Scope::Global;
             identity.type = Aliases::Type::Variable;
             identity.identifier = m.str(1);
-            
-//            std::ostringstream os;
-//            os << "v" << ++variableAliasCount;
-//            identity.real = os.str();
-            
-            identity.real = "g" + base10ToBase36(++globalVariableAliasCount);// = os.str();
-            
+            identity.real = "g" + base10ToBase32(++globalVariableAliasCount);// = os.str();
             
             singleton->aliases.append(identity);
         }
     }
     
     if (Singleton::Scope::Local == singleton->scope) {
-//        // LOCAL
-//        r = R"(\bLOCAL (?:[A-Za-z]\w*[,;])+)";
-//        if (regex_search(ln, m, r)) {
-//            std::string matched = m.str();
-//            r = R"([A-Za-z]\w*(?=[,;]))";
-//            
-//            for(auto it = std::sregex_iterator(matched.begin(), matched.end(), r); it != std::sregex_iterator(); ++it) {
-//                if (it->str().length() < 3) continue;
-//                Aliases::TIdentity identity;
-//                identity.scope = Aliases::Scope::Local;
-//                identity.type = Aliases::Type::Variable;
-//                identity.identifier = it->str();
-//                
-//                std::ostringstream os;
-//                os << "v" << ++variableAliasCount;
-//                identity.real = os.str();
-//                
-//                singleton->aliases.append(identity);
-//            }
-//        }
+        identity.scope = Aliases::Scope::Local;
         
-        r = R"(\bLOCAL +([A-Za-z]\w*)(?::=))";
+        // LOCAL
+        r = R"(\bLOCAL (?:[A-Za-z]\w*[,;])+)";
         if (regex_search(ln, m, r)) {
-            Aliases::TIdentity identity;
-            identity.scope = Aliases::Scope::Local;
+            std::string matched = m.str();
+            r = R"([A-Za-z]\w*(?=[,;]))";
+            
+            for(auto it = std::sregex_iterator(matched.begin(), matched.end(), r); it != std::sregex_iterator(); ++it) {
+                if (it->str().length() < 3) continue;
+                identity.type = Aliases::Type::Variable;
+                identity.identifier = it->str();
+                identity.real = "v" + base10ToBase32(++localVariableAliasCount);
+                
+                singleton->aliases.append(identity);
+            }
+        }
+        
+        r = R"(\bLOCAL ([A-Za-z]\w*)(?::=))";
+        if (regex_search(ln, m, r)) {
             identity.type = Aliases::Type::Variable;
             identity.identifier = m.str(1);
-            
-//            std::ostringstream os;
-//            os << "v" << ++variableAliasCount;
-            identity.real = "v" + base10ToBase36(++variableAliasCount);// = os.str();
+            identity.real = "v" + base10ToBase32(++localVariableAliasCount);
             
             singleton->aliases.append(identity);
         }
         
+        ln = regex_replace(ln, std::regex(R"(\(\))"), "");
+        
+        while (regex_search(ln, m, std::regex(R"(^[A-Za-z]\w*:=[^;]*;)"))) {
+            std::string matched = m.str();
+            
+            /*
+             eg. v1:=v2+v4;
+             Group  0 v1:=v2+v4;
+                    1 v1
+                    2 v2+v4
+            */
+            r = R"(([A-Za-z]\w*):=(.*);)";
+            auto it = std::sregex_token_iterator {
+                matched.begin(), matched.end(), r, {2, 1}
+            };
+            if (it != std::sregex_token_iterator()) {
+                std::stringstream ss;
+                ss << *it++ << "▶" << *it << ";";
+                ln = ln.replace(m.position(), m.length(), ss.str());
+            }
+        }
     }
     
     ln = singleton->aliases.resolveAliasesInText(ln);
-    
-//    reduce(ln);
-    
     strings.restoreStrings(ln);
     
-    ln = regex_replace(ln, std::regex(R"([^;,]$)"), "$0\n");
-    
-//    ln += '\n';
-//    
-//    ln = regex_replace(ln, std::regex(R"(;\n$)"), ";");
-//    ln = regex_replace(ln, std::regex(R"(,\n$)"), ",");
-    
-    
+    ln = regex_replace(ln, std::regex(R"([^;,\[\]\{\}]$)"), "$0\n");
 }
 
 // MARK: - Command Line

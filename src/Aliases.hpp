@@ -34,6 +34,7 @@ class Aliases {
 public:
     enum class Type {
         Unknown,
+        GlobalVariable,
         Variable,
         Function,
         Property
