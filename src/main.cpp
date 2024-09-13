@@ -412,7 +412,7 @@ void preProcess(std::string &ln, std::ofstream &outfile) {
         if (regex_search(ln, m, r)) {
             identity.type = Aliases::Type::Variable;
             identity.identifier = m.str(1);
-            identity.real = "g" + base10ToBase32(++globalVariableAliasCount);// = os.str();
+            identity.real = "g" + base10ToBase32(++globalVariableAliasCount);
             
             singleton->aliases.append(identity);
         }
