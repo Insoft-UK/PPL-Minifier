@@ -22,6 +22,7 @@
  SOFTWARE.
  */
 
+
 #ifndef common_hpp
 #define common_hpp
 
@@ -32,7 +33,7 @@
 #include <ostream>
 #include <fstream>
 
-#include "Singleton.hpp"
+#include "singleton.hpp"
 
 enum class MessageType {
     Warning,

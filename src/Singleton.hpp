@@ -22,12 +22,13 @@
  SOFTWARE.
  */
 
+
 #ifndef SINGLETON_HPP
 #define SINGLETON_HPP
 
 #include <iostream>
 #include <vector>
-#include "Aliases.hpp"
+#include "aliases.hpp"
 #include "common.hpp"
 
 using namespace ppl;

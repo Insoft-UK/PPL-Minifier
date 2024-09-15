@@ -23,8 +23,8 @@
  */
 
 
-#include "Preprocessor.hpp"
-#include "Singleton.hpp"
+#include "preprocessor.hpp"
+#include "singleton.hpp"
 #include "common.hpp"
 
 #include <regex>
@@ -40,7 +40,6 @@ bool Preprocessor::parse(std::string &str) {
         python = false;
         return false;
     }
-    
     
     if (regex_search(str, std::regex(R"(^ *#PYTHON\b)"))) {
         python=true;

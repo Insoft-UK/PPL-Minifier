@@ -32,11 +32,11 @@
 
 #include <sys/time.h>
 
-#include "Singleton.hpp"
+#include "singleton.hpp"
 #include "common.hpp"
 
-#include "Preprocessor.hpp"
-#include "Strings.hpp"
+#include "preprocessor.hpp"
+#include "strings.hpp"
 
 #include "build.h"
 

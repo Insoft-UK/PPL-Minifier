@@ -22,6 +22,7 @@
  SOFTWARE.
  */
 
+
 #ifndef STRINGS_HPP
 #define STRINGS_HPP
 

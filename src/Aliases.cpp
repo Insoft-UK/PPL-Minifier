@@ -22,11 +22,10 @@
  SOFTWARE.
  */
 
-
-#include "Aliases.hpp"
+#include "aliases.hpp"
 #include "common.hpp"
 
-#include "Singleton.hpp"
+#include "singleton.hpp"
 #include <regex>
 #include <sstream>
 
