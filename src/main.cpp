@@ -209,92 +209,9 @@ std::string base10ToBase32(unsigned int num) {
     return result;
 }
 
-// MARK: - Pre-Processing...
+// MARK: - Minifying And Writing
 
-void processLine(const std::string& str, std::ofstream& outfile) {
-    Singleton& singleton = *Singleton::shared();
-    std::string ln = str;
-    
-    preProcess(ln, outfile);
-    
-    for ( int n = 0; n < ln.length(); n++) {
-        uint8_t *ascii = (uint8_t *)&ln.at(n);
-        if (ln.at(n) == '\r') continue;
-        
-        // Output as UTF-16LE
-        if (*ascii >= 0x80) {
-            uint16_t utf16 = utf8_to_utf16(&ln.at(n));
-            
-#ifndef __LITTLE_ENDIAN__
-            utf16 = utf16 >> 8 | utf16 << 8;
-#endif
-            outfile.write((const char *)&utf16, 2);
-            if ((*ascii & 0b11100000) == 0b11000000) n++;
-            if ((*ascii & 0b11110000) == 0b11100000) n+=2;
-            if ((*ascii & 0b11111000) == 0b11110000) n+=3;
-        } else {
-            outfile.put(ln.at(n));
-            outfile.put('\0');
-        }
-    }
-    
-    singleton.incrementLineNumber();
-}
-
-void processLines(std::ifstream &infile, std::ofstream &outfile)
-{
-    std::string s;
-    
-    char c;
-    while (!infile.eof()) {
-        infile.get(c);
-        s += c;
-        if (c == 0x0A) {
-            infile.seekg(1, std::ios_base::cur);
-            processLine(s, outfile);
-            s = std::string("");
-        }
-        
-        infile.peek();
-    }
-}
-
-void processStringLines(std::istringstream &iss, std::ofstream &outfile)
-{
-    std::string s;
-    
-    while(getline(iss, s)) {
-        processLine(s, outfile);
-    }
-}
-
-void process(std::ifstream &infile, std::ofstream &outfile)
-{
-    if (!isUTF16le(infile)) {
-        infile.close();
-        return;
-    }
-   
-    processLines(infile, outfile);
-}
-
-
-void processString(const std::string &str, std::ofstream &outfile) {
-    Singleton &singleton = *Singleton::shared();
-    
-    std::string ln;
-    
-    singleton.pushPathname("");
-
-    std::istringstream iss{ str };
-    
-    processStringLines(iss, outfile);
-
-    singleton.popPathname();
-}
-
-
-void preProcess(std::string &ln, std::ofstream &outfile) {
+void minifieLine(std::string &ln, std::ofstream &outfile) {
     std::regex r;
     std::smatch m;
     std::ifstream infile;
@@ -302,10 +219,6 @@ void preProcess(std::string &ln, std::ofstream &outfile) {
     Singleton *singleton = Singleton::shared();
     
     static int globalVariableAliasCount = -1, localVariableAliasCount = -1, functionAliasCount = -1;
-    
-    // The UTF16-LE data first needs to be converted to UTF8 before it can be proccessed.
-    uint16_t *utf16_str = (uint16_t *)ln.c_str();
-    ln = utf16_to_utf8(utf16_str, ln.size() / 2);
     
     if (preprocessor.python) {
         // We're presently handling Python code.
@@ -478,6 +391,92 @@ void preProcess(std::string &ln, std::ofstream &outfile) {
     ln = regex_replace(ln, std::regex(R"([^;,\[\]\{\}]$)"), "$0\n");
 }
 
+void writeUTF16Line(const std::string& ln, std::ofstream& outfile) {
+    for ( int n = 0; n < ln.length(); n++) {
+        uint8_t *ascii = (uint8_t *)&ln.at(n);
+        if (ln.at(n) == '\r') continue;
+        
+        // Output as UTF-16LE
+        if (*ascii >= 0x80) {
+            uint16_t utf16 = utf8_to_utf16(&ln.at(n));
+            
+#ifndef __LITTLE_ENDIAN__
+            utf16 = utf16 >> 8 | utf16 << 8;
+#endif
+            outfile.write((const char *)&utf16, 2);
+            if ((*ascii & 0b11100000) == 0b11000000) n++;
+            if ((*ascii & 0b11110000) == 0b11100000) n+=2;
+            if ((*ascii & 0b11111000) == 0b11110000) n+=3;
+        } else {
+            outfile.put(ln.at(n));
+            outfile.put('\0');
+        }
+    }
+}
+
+void minifieAndWriteLine(std::string& str, std::ofstream& outfile) {
+    Singleton& singleton = *Singleton::shared();
+    
+    minifieLine(str, outfile);
+    writeUTF16Line(str, outfile);
+    
+    singleton.incrementLineNumber();
+}
+
+void processAndWriteLines(std::istringstream &iss, std::ofstream &outfile)
+{
+    std::string str;
+    
+    while(getline(iss, str)) {
+        minifieAndWriteLine(str, outfile);
+    }
+}
+
+void convertAndFormatFile(std::ifstream &infile, std::ofstream &outfile)
+{
+    if (!isUTF16le(infile)) {
+        infile.close();
+        return;
+    }
+   
+    // Read in the whole of the file into a `std::string`
+    std::string str;
+    
+    char c;
+    while (!infile.eof()) {
+        infile.get(c);
+        str += c;
+        infile.peek();
+    }
+    
+    
+    // The UTF16-LE data first needs to be converted to UTF8 before it can be proccessed.
+    uint16_t *utf16_str = (uint16_t *)str.c_str();
+    str = utf16_to_utf8(utf16_str, str.size() / 2);
+    
+    std::regex r;
+
+    /*
+     Pre-correct any `THEN`, `DO` or `REPEAT` statements that are followed by other statements on the
+     same line by moving the additional statement(s) to the next line. This ensures that the code
+     is correctly processed, as it separates the conditional or loop structure from the subsequent
+     statements for proper handling.
+     */
+    r = R"(\b(THEN|DO|REPEAT)\b)";
+    str = regex_replace(str, r, "$0\n");
+    
+    // Make sure all `LOCAL` are on seperate lines.
+    r = R"(\b(LOCAL|CASE|IF)\b)";
+    str = regex_replace(str, r, "\n$0");
+
+    r = R"(\bEND;)";
+    str = regex_replace(str, r, "\n$0");
+    
+    std::istringstream iss;
+    iss.str(str);
+    processAndWriteLines(iss, outfile);
+}
+
 // MARK: - Command Line
 void version(void) {
     std::cout 
@@ -585,9 +584,7 @@ int main(int argc, char **argv) {
     
     std::string str;
 
-//    Singleton::shared()->pushPathname(in_filename);
-    process( infile, outfile );
-//    Singleton::shared()->popPathname();
+    convertAndFormatFile( infile, outfile );
     
     // Stop measuring time and calculate the elapsed time.
     clock_gettime(CLOCK_MONOTONIC, &end);
