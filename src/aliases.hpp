@@ -32,50 +32,44 @@
 #include <stdint.h>
 
 namespace ppl {
-
-class Aliases {
-public:
-    enum class Type {
-        Unknown,
-        GlobalVariable,
-        Variable,
-        Function,
-        Property
+    class Aliases {
+    public:
+        enum class Type {
+            Unknown,
+            GlobalVariable,
+            Variable,
+            Function,
+            Property
+        };
+        
+        enum class Scope {
+            Auto   = 0,
+            Global = 1,
+            Local  = 2
+        };
+        
+        typedef struct TIdentity {
+            std::string identifier;
+            std::string real;
+            Type type;
+            Scope scope;
+            long line;              // line that definition accoured;
+            std::string pathname;   // path and filename that definition accoured
+        } TIdentity;
+        std::vector<TIdentity> identities;
+        
+        bool descendingOrder = true;
+        bool verbose = false;
+        
+        bool append(const TIdentity &identity);
+        void removeAllLocalAliases();
+        void removeAllAliasesOfType(const Type type);
+        std::string resolveAliasesInText(const std::string &str);
+        void remove(const std::string &identifier);
+        bool exists(const TIdentity &identity);
+        bool identifierExists(const std::string &identifier);
+        bool realExists(const std::string &real);
+        void dumpIdentities();
     };
-    
-    enum class Scope {
-        Auto   = 0,
-        Global = 1,
-        Local  = 2
-    };
-    
-    typedef struct TIdentity {
-        std::string identifier;
-        std::string real;
-        Type type;
-        Scope scope;
-        long line;              // line that definition accoured;
-        std::string pathname;   // path and filename that definition accoured
-    } TIdentity;
-    std::vector<TIdentity> identities;
-    
-    bool descendingOrder = true;
-    
-    bool verbose = false;
-    Aliases() {
-    }
-    
-    bool append(const TIdentity &identity);
-    void removeAllLocalAliases();
-    void removeAllAliasesOfType(const Type type);
-    std::string resolveAliasesInText(const std::string &str);
-    void remove(const std::string &identifier);
-    bool exists(const TIdentity &identity);
-    bool identifierExists(const std::string &identifier);
-    bool realExists(const std::string &real);
-    
-    void dumpIdentities();
-};
-
 }
 #endif // ALIASES_HPP

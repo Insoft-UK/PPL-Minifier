@@ -29,16 +29,12 @@
 #include "aliases.hpp"
 
 namespace ppl {
-
-class Preprocessor {
-public:
-
-    bool verbose = false;
-    bool python = false;
-    
-    bool parse(std::string &str);
-};
-
+    class Preprocessor {
+    public:
+        bool verbose = false;
+        bool python = false;
+        bool parse(std::string &str);
+    };
 }
 
 #endif /* PREPROCESSOR_HPP */

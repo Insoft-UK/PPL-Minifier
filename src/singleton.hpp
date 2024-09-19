@@ -34,7 +34,6 @@
 using namespace ppl;
 
 class Singleton {
-    
     std::vector<std::string> _pathnames;
     std::vector<long> _lines;
     static Singleton* _shared;

@@ -3,3 +3,6 @@ xcuserdata/
 .DS_Store
 *.sh
 bin/*
+www
+.www
+example
