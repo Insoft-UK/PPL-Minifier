@@ -39,6 +39,7 @@
 #include "strings.hpp"
 
 #include "build.h"
+#include "timer.hpp"
 
 using namespace ppl;
 
@@ -180,10 +181,10 @@ bool isUTF16le(std::ifstream &infile)
 std::string removeWhitespaceAroundOperators(const std::string& str) {
     // Regular expression pattern to match spaces around the specified operators
     // Operators: {}[]()≤≥≠<>=*/+-▶.,;:!^
-    std::regex r(R"(\s*([{}[\]()≤≥≠<>=*/+\-▶.,;:!^])\s*)");
+    std::regex re(R"(\s*([{}[\]()≤≥≠<>=*/+\-▶.,;:!^])\s*)");
 
     // Replace matches with the operator and no surrounding spaces
-    std::string result = std::regex_replace(str, r, "$1");
+    std::string result = std::regex_replace(str, re, "$1");
 
     return result;
 }
@@ -212,8 +213,8 @@ std::string base10ToBase32(unsigned int num) {
 // MARK: - Minifying And Writing
 
 void minifieLine(std::string &ln, std::ofstream &outfile) {
-    std::regex r;
-    std::smatch m;
+    std::regex re;
+    std::smatch match;
     std::ifstream infile;
     
     Singleton *singleton = Singleton::shared();
@@ -244,6 +245,7 @@ void minifieLine(std::string &ln, std::ofstream &outfile) {
      been universally altered can be restored to their original state.
      */
     strings.preserveStrings(ln);
+    strings.blankOutStrings(ln);
     
     // Remove any comments.
     size_t pos = ln.find("//");
@@ -269,14 +271,14 @@ void minifieLine(std::string &ln, std::ofstream &outfile) {
     ln = regex_replace(ln, std::regex(R"(<>)"), "≠");
     ln = regex_replace(ln, std::regex(R"(==)"), "=");
     
-    r = std::regex(R"(\b(?:BEGIN|IF|CASE|FOR|WHILE|REPEAT|FOR|WHILE|REPEAT)\b)", std::regex_constants::icase);
-    for(auto it = std::sregex_iterator(ln.begin(), ln.end(), r); it != std::sregex_iterator(); ++it) {
+    re = std::regex(R"(\b(?:BEGIN|IF|CASE|FOR|WHILE|REPEAT|FOR|WHILE|REPEAT)\b)", std::regex_constants::icase);
+    for(auto it = std::sregex_iterator(ln.begin(), ln.end(), re); it != std::sregex_iterator(); ++it) {
         singleton->nestingLevel++;
         singleton->scope = Singleton::Scope::Local;
     }
     
-    r = std::regex(R"(\b(?:END|UNTIL)\b)", std::regex_constants::icase);
-    for(auto it = std::sregex_iterator(ln.begin(), ln.end(), r); it != std::sregex_iterator(); ++it) {
+    re = std::regex(R"(\b(?:END|UNTIL)\b)", std::regex_constants::icase);
+    for(auto it = std::sregex_iterator(ln.begin(), ln.end(), re); it != std::sregex_iterator(); ++it) {
         singleton->nestingLevel--;
         if (0 == singleton->nestingLevel) {
             singleton->scope = Singleton::Scope::Global;
@@ -294,19 +296,19 @@ void minifieLine(std::string &ln, std::ofstream &outfile) {
         ln = regex_replace(ln, std::regex(R"(\bLOCAL +)"), "");
         
         // Function
-        r = R"(^([A-Za-z]\w*)\(([\w,]*)\);?$)";
-        if (regex_search(ln, m, r)) {
+        re = R"(^([A-Za-z]\w*)\(([\w,]*)\);?$)";
+        if (regex_search(ln, match, re)) {
             identity.type = Aliases::Type::Function;
-            identity.identifier = m.str(1);
+            identity.identifier = match.str(1);
             identity.real = "f" + base10ToBase32(++functionAliasCount);
             singleton->aliases.append(identity);
             
-            std::string s = m.str(2);
+            std::string s = match.str(2);
             int count = -1;
             identity.scope = Aliases::Scope::Local;
             identity.type = Aliases::Type::Property;
-            r = R"([A-Za-z]\w*)";
-            for(auto it = std::sregex_iterator(s.begin(), s.end(), r); it != std::sregex_iterator(); ++it) {
+            re = R"([A-Za-z]\w*)";
+            for(auto it = std::sregex_iterator(s.begin(), s.end(), re); it != std::sregex_iterator(); ++it) {
                 if (it->str().length() < 3) continue;
                 identity.identifier = it->str();
                 identity.real = "p" + base10ToBase32(++count);
@@ -324,10 +326,10 @@ void minifieLine(std::string &ln, std::ofstream &outfile) {
         
         
         // Global Variable
-        r = R"(\b(?:LOCAL )?([A-Za-z]\w*)(?::=.*);)";
-        if (regex_search(ln, m, r)) {
+        re = R"(\b(?:LOCAL )?([A-Za-z]\w*)(?::=.*);)";
+        if (regex_search(ln, match, re)) {
             identity.type = Aliases::Type::Variable;
-            identity.identifier = m.str(1);
+            identity.identifier = match.str(1);
             identity.real = "g" + base10ToBase32(++globalVariableAliasCount);
             
             singleton->aliases.append(identity);
@@ -338,12 +340,12 @@ void minifieLine(std::string &ln, std::ofstream &outfile) {
         identity.scope = Aliases::Scope::Local;
         
         // LOCAL
-        r = R"(\bLOCAL (?:[A-Za-z]\w*[,;])+)";
-        if (regex_search(ln, m, r)) {
-            std::string matched = m.str();
-            r = R"([A-Za-z]\w*(?=[,;]))";
+        re = R"(\bLOCAL (?:[A-Za-z]\w*[,;])+)";
+        if (regex_search(ln, match, re)) {
+            std::string matched = match.str();
+            re = R"([A-Za-z]\w*(?=[,;]))";
             
-            for(auto it = std::sregex_iterator(matched.begin(), matched.end(), r); it != std::sregex_iterator(); ++it) {
+            for(auto it = std::sregex_iterator(matched.begin(), matched.end(), re); it != std::sregex_iterator(); ++it) {
                 if (it->str().length() < 3) continue;
                 identity.type = Aliases::Type::Variable;
                 identity.identifier = it->str();
@@ -353,10 +355,10 @@ void minifieLine(std::string &ln, std::ofstream &outfile) {
             }
         }
         
-        r = R"(\bLOCAL ([A-Za-z]\w*)(?::=))";
-        if (regex_search(ln, m, r)) {
+        re = R"(\bLOCAL ([A-Za-z]\w*)(?::=))";
+        if (regex_search(ln, match, re)) {
             identity.type = Aliases::Type::Variable;
-            identity.identifier = m.str(1);
+            identity.identifier = match.str(1);
             identity.real = "v" + base10ToBase32(++localVariableAliasCount);
             
             singleton->aliases.append(identity);
@@ -364,8 +366,8 @@ void minifieLine(std::string &ln, std::ofstream &outfile) {
         
         ln = regex_replace(ln, std::regex(R"(\(\))"), "");
         
-        while (regex_search(ln, m, std::regex(R"(^[A-Za-z]\w*:=[^;]*;)"))) {
-            std::string matched = m.str();
+        while (regex_search(ln, match, std::regex(R"(^[A-Za-z]\w*:=[^;]*;)"))) {
+            std::string matched = match.str();
             
             /*
              eg. v1:=v2+v4;
@@ -373,14 +375,14 @@ void minifieLine(std::string &ln, std::ofstream &outfile) {
                     1 v1
                     2 v2+v4
             */
-            r = R"(([A-Za-z]\w*):=(.*);)";
+            re = R"(([A-Za-z]\w*):=(.*);)";
             auto it = std::sregex_token_iterator {
-                matched.begin(), matched.end(), r, {2, 1}
+                matched.begin(), matched.end(), re, {2, 1}
             };
             if (it != std::sregex_token_iterator()) {
                 std::stringstream ss;
                 ss << *it++ << "▶" << *it << ";";
-                ln = ln.replace(m.position(), m.length(), ss.str());
+                ln = ln.replace(match.position(), match.length(), ss.str());
             }
         }
     }
@@ -394,7 +396,7 @@ void minifieLine(std::string &ln, std::ofstream &outfile) {
 void writeUTF16Line(const std::string& ln, std::ofstream& outfile) {
     for ( int n = 0; n < ln.length(); n++) {
         uint8_t *ascii = (uint8_t *)&ln.at(n);
-        if (ln.at(n) == '\r') continue;
+        if (ln.at(n) == '\e') continue;
         
         // Output as UTF-16LE
         if (*ascii >= 0x80) {
@@ -454,7 +456,7 @@ void convertAndFormatFile(std::ifstream &infile, std::ofstream &outfile)
     uint16_t *utf16_str = (uint16_t *)str.c_str();
     str = utf16_to_utf8(utf16_str, str.size() / 2);
     
-    std::regex r;
+    std::regex re;
 
     /*
      Pre-correct any `THEN`, `DO` or `REPEAT` statements that are followed by other statements on the
@@ -462,15 +464,15 @@ void convertAndFormatFile(std::ifstream &infile, std::ofstream &outfile)
      is correctly processed, as it separates the conditional or loop structure from the subsequent
      statements for proper handling.
      */
-    r = R"(\b(THEN|DO|REPEAT)\b)";
-    str = regex_replace(str, r, "$0\n");
+    re = R"(\b(THEN|DO|REPEAT)\b)";
+    str = regex_replace(str, re, "$0\n");
     
     // Make sure all `LOCAL` are on seperate lines.
-    r = R"(\b(LOCAL|CASE|IF)\b)";
-    str = regex_replace(str, r, "\n$0");
+    re = R"(\b(LOCAL|CASE|IF)\b)";
+    str = regex_replace(str, re, "\n$0");
 
-    r = R"(\bEND;)";
-    str = regex_replace(str, r, "\n$0");
+    re = R"(\bEND;)";
+    str = regex_replace(str, re, "\n$0");
     
     std::istringstream iss;
     iss.str(str);
@@ -478,32 +480,79 @@ void convertAndFormatFile(std::ifstream &infile, std::ofstream &outfile)
 }
 
 // MARK: - Command Line
+/*
+ The decimalToBase24 function converts a given
+ base 10 integer into its base 24 representation using a
+ specific set of characters. The character set is
+ comprised of the following 24 symbols:
+
+     •    Numbers: 0, 1, 2, 3, 4, 5, 6, 7, 8, 9
+     •    Letters: C, D, F, H, J, K, M, N, R, U, V, W, X, Y
+     
+ Character Selection:
+ The choice of characters was made to avoid confusion
+ with common alphanumeric representations, ensuring
+ that each character is visually distinct and easily
+ recognizable. This set excludes characters that closely
+ resemble each other or numerical digits, promoting
+ clarity in representation.
+ */
+static std::string decimalToBase24(long num) {
+    if (num == 0) {
+        return "C";
+    }
+
+    const std::string base24Chars = "0123456789CDFHJKMNRUVWXY";
+    std::string base24;
+
+    while (num > 0) {
+        int remainder = num % 24;
+        base24 = base24Chars[remainder] + base24; // Prepend character
+        num /= 24; // Integer division
+    }
+
+    return base24;
+}
+
+static std::string getBuildCode(void) {
+    std::string str;
+    int majorVersionNumber = BUILD_NUMBER / 100000;
+    str = std::to_string(majorVersionNumber) + decimalToBase24(BUILD_NUMBER - majorVersionNumber * 100000);
+    return str;
+}
+
 void version(void) {
-    std::cout 
-    << "P+ Pre-Processor v"
-    << (unsigned)__BUILD_NUMBER / 100000 << "."
-    << (unsigned)__BUILD_NUMBER / 10000 % 10 << "."
-    << (unsigned)__BUILD_NUMBER / 1000 % 10 << "."
-    << std::setfill('0') << std::setw(3) << (unsigned)__BUILD_NUMBER % 1000
-    << "\n";
+    std::cout << "Copyright (C) 2024 Insoft. All rights reserved.\n";
+    std::cout << "Insoft PPL Minifier version, " << BUILD_NUMBER / 100000 << "." << BUILD_NUMBER / 10000 % 10 << "." << BUILD_NUMBER / 1000 % 10
+    << " (BUILD " << getBuildCode() << ")\n";
+    std::cout << "Built on: " << CURRENT_DATE << "\n";
+    std::cout << "Licence: MIT License\n\n";
+    std::cout << "For more information, visit: http://www.insoft.uk\n";
 }
 
 void error(void) {
-    printf("pplmin: try 'pplmin --help' for more information\n");
+    std::cout << "pplmin: try 'pplmin -help' for more information\n";
+    exit(0);
 }
 
 void info(void) {
-    std::cout << "Copyright (c) 2024 Insoft. All rights reserved\n";
-    int rev = (unsigned)__BUILD_NUMBER / 1000 % 10;
-    std::cout << "PPL Minifier v" << (unsigned)__BUILD_NUMBER / 100000 << "." << (unsigned)__BUILD_NUMBER / 10000 % 10 << (rev ? "." + std::to_string(rev) : "") << " BUILD " << std::setfill('0') << std::setw(3) << __BUILD_NUMBER % 1000 << "\n\n";
+    std::cout << "Copyright (c) 2024 Insoft. All rights reserved.\n";
+    int rev = BUILD_NUMBER / 1000 % 10;
+    std::cout << "Insoft PPL Minifier version, " << BUILD_NUMBER / 100000 << "." << BUILD_NUMBER / 10000 % 10 << (rev ? "." + std::to_string(rev) : "")
+    << " (BUILD " << getBuildCode() << "-" << decimalToBase24(BUILD_DATE) << ")\n\n";
 }
 
-void usage(void) {
-    info();
-    std::cout << "usage: pplmin in-file\n\n";
-    std::cout << " -v, --verbose     display detailed processing information\n";
-    std::cout << " -h, --help        help.\n";
-    std::cout << " --version         displays the full version number.\n";
+void help(void) {
+    int rev = BUILD_NUMBER / 1000 % 10;
+    
+    std::cout << "Copyright (C) 2024 Insoft. All rights reserved.\n";
+    std::cout << "Insoft PPL Minifier version, " << BUILD_NUMBER / 100000 << "." << BUILD_NUMBER / 10000 % 10 << (rev ? "." + std::to_string(rev) : "")
+    << " (BUILD " << getBuildCode() << "-" << decimalToBase24(BUILD_DATE) << ")\n\n";
+    std::cout << "Usage: pplmin <input-file>\n\n";
+    std::cout << "Additional Commands:\n";
+    std::cout << "  pplmin {-version | -help}\n";
+    std::cout << "    -version              Display the version information.\n";
+    std::cout << "    -help                 Show this help message.\n";
 }
 
 // Custom facet to use comma as the thousands separator
@@ -525,26 +574,26 @@ int main(int argc, char **argv) {
     if ( argc == 1 )
     {
         error();
-        exit(100);
+        exit(0);
     }
     
     for( int n = 1; n < argc; n++ ) {
         std::string args(argv[n]);
         
-        if ( args == "--help" ) {
-            usage();
-            exit(102);
+        if ( args == "-help" ) {
+            help();
+            exit(0);
         }
         
         
         
-        if ( strcmp( argv[n], "--version" ) == 0 ) {
+        if ( strcmp( argv[n], "-version" ) == 0 ) {
             version();
             return 0;
         }
         
         in_filename = argv[n];
-        std::regex r(R"(.\w*$)");
+        std::regex re(R"(.\w*$)");
         std::smatch extension;
     }
     
@@ -579,19 +628,17 @@ int main(int argc, char **argv) {
     outfile.put(0xFE);
     
     // Start measuring time
-    struct timespec start, end;
-    clock_gettime(CLOCK_MONOTONIC, &start);
+    Timer timer;
     
     std::string str;
 
     convertAndFormatFile( infile, outfile );
     
     // Stop measuring time and calculate the elapsed time.
-    clock_gettime(CLOCK_MONOTONIC, &end);
+    long long elapsed_time = timer.elapsed();
     
     // Display elasps time in secononds.
-    double delta_us = (end.tv_sec - start.tv_sec) * 1000000 + (end.tv_nsec - start.tv_nsec) / 1000;
-    printf("Completed in %.3f seconds.\n", delta_us * 1e-6);
+    std::cout << "Completed in " << std::fixed << std::setprecision(2) << elapsed_time / 1e9 << " seconds\n";
     
     infile.close();
     outfile.close();

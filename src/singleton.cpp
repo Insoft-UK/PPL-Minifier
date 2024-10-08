@@ -54,7 +54,7 @@ std::string Singleton::getPath(void) {
     return pathname;
 }
 
-void Singleton::pushPathname(const std::string &pathname) {
+void Singleton::pushPathname(const std::string& pathname) {
     _pathnames.push_back(pathname);
     _lines.push_back(_currentline);
     _currentline = 1;

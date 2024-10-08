@@ -1,1 +1,3 @@
-unsigned __BUILD_NUMBER=100027;
+#define BUILD_NUMBER 100049
+#define CURRENT_DATE "2024 September 30"
+#define BUILD_DATE 20240930

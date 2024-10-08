@@ -35,7 +35,7 @@ bool compareInterval(Aliases::TIdentity i1, Aliases::TIdentity i2) {
     return (i1.identifier.length() > i2.identifier.length());
 }
 
-bool Aliases::append(const TIdentity &idty) {
+bool Aliases::append(const TIdentity& idty) {
     TIdentity identity = idty;
     Singleton *singleton = Singleton::shared();
     
@@ -117,27 +117,26 @@ void Aliases::removeAllAliasesOfType(const Type type) {
 }
 
 
-std::string Aliases::resolveAliasesInText(const std::string &str) {
+std::string Aliases::resolveAliasesInText(const std::string& str) {
     std::string s = str;
-    std::regex r;
-    std::smatch m;
+    std::regex re;
     
     if (s.empty()) return s;
         
     for (auto it = identities.begin(); it != identities.end(); ++it) {
         if ('`' == it->identifier.at(0) && '`' == it->identifier.at(it->identifier.length() - 1)) {
-            r = it->identifier;
+            re = it->identifier;
         } else {
-            r = R"(\b)" + it->identifier + R"(\b)";
+            re = R"(\b)" + it->identifier + R"(\b)";
         }
 
-        s = regex_replace(s, r, it->real);
+        s = regex_replace(s, re, it->real);
     }
     
     return s;
 }
 
-void Aliases::remove(const std::string &identifier) {
+void Aliases::remove(const std::string& identifier) {
     for (auto it = identities.begin(); it != identities.end(); ++it) {
         if (it->identifier == identifier) {
             if (verbose) std::cout
@@ -162,7 +161,7 @@ bool Aliases::exists(const TIdentity &identity) {
     return false;
 }
 
-bool Aliases::identifierExists(const std::string &identifier) {
+bool Aliases::identifierExists(const std::string& identifier) {
     for (auto it = identities.begin(); it != identities.end(); ++it) {
         if (it->identifier == identifier) {
             return true;
@@ -171,7 +170,7 @@ bool Aliases::identifierExists(const std::string &identifier) {
     return false;
 }
 
-bool Aliases::realExists(const std::string &real) {
+bool Aliases::realExists(const std::string& real) {
     for (auto it = identities.begin(); it != identities.end(); ++it) {
         if (it->real == real) {
             return true;

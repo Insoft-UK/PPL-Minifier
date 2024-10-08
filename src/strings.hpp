@@ -32,11 +32,11 @@
 namespace ppl {
     class Strings {
     public:
-        void preserveStrings(const std::string &str);
-        void restoreStrings(std::string &altered);
+        void preserveStrings(const std::string& str);
+        void blankOutStrings(std::string& str);
+        void restoreStrings(std::string& str);
     private:
         std::list<std::string> _preservedStrings;
-        std::string _original;
     };
 }
 

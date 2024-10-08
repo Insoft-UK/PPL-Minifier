@@ -1,7 +1,7 @@
 /*
  The MIT License (MIT)
  
- Copyright (c) 2024 Insoft. All rights reserved.
+ Copyright (c) 2023-2024 Insoft. All rights reserved.
  
  Permission is hereby granted, free of charge, to any person obtaining a copy
  of this software and associated documentation files (the "Software"), to deal
@@ -22,57 +22,26 @@
  SOFTWARE.
  */
 
-
-#ifndef SINGLETON_HPP
-#define SINGLETON_HPP
+#ifndef TIMER_HPP
+#define TIMER_HPP
 
 #include <iostream>
-#include <vector>
-#include "aliases.hpp"
-#include "common.hpp"
+#include <chrono>
+#include <thread>
 
-using namespace ppl;
-
-class Singleton {
-    std::vector<std::string> _pathnames;
-    std::vector<long> _lines;
-    static Singleton* _shared;
+class Timer {
 public:
-    enum class Scope {
-        Global = 1,
-        Local  = 2
-    };
-    Scope scope = Scope::Global;
+    Timer() : start_time_point(std::chrono::high_resolution_clock::now()) {}
 
-    Aliases aliases;
-    
-    int nestingLevel = 0;
-    
-    static Singleton *shared();
-    
-    void incrementLineNumber(void);
-    long currentLineNumber(void);
-    
-    std::string currentPathname(void);
-    
-    // returns the pathname of
-    std::string getPath(void);
-    
-    void pushPathname(const std::string& pathname);
-    void popPathname(void);
-    
-    
-    
-private:
-    Singleton() {
-        _currentline = 1;
+    // Method to stop the timer and get elapsed time in nanoseconds
+    long long elapsed() {
+        auto end_time_point = std::chrono::high_resolution_clock::now();
+        auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(end_time_point - start_time_point);
+        return duration.count();
     }
-    Singleton(const Singleton &);
-    Singleton& operator=(const Singleton &);
-    
-protected:
-    long _currentline;
+
+private:
+    std::chrono::high_resolution_clock::time_point start_time_point;
 };
 
-
-#endif /* SINGLETON_HPP */
+#endif /* TIMER_HPP */

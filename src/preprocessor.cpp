@@ -35,7 +35,7 @@ using namespace ppl;
 
 static Singleton* _singleton  = Singleton::shared();
 
-bool Preprocessor::parse(std::string &str) {
+bool Preprocessor::parse(std::string& str) {
     if (regex_search(str, std::regex(R"(^ *#END\b)", std::regex_constants::icase))) {
         python = false;
         return false;
