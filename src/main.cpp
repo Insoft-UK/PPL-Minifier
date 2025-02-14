@@ -439,11 +439,6 @@ void processAndWriteLines(std::istringstream &iss, std::ofstream &outfile)
 
 void convertAndFormatFile(std::ifstream &infile, std::ofstream &outfile)
 {
-    if (!isUTF16le(infile)) {
-        infile.close();
-        return;
-    }
-   
     // Read in the whole of the file into a `std::string`
     std::string str;
     
@@ -589,6 +584,13 @@ int main(int argc, char **argv) {
     
     std::string str;
 
+    if (!isUTF16le(infile)) {
+        infile.close();
+        outfile.close();
+        std::cout << "ERRORS! not a valid UTF16le file.\n";
+        remove(out_filename.c_str());
+        return 0;
+    }
     convertAndFormatFile( infile, outfile );
     
     // Stop measuring time and calculate the elapsed time.

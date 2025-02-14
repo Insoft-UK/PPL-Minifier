@@ -3,7 +3,7 @@ xcuserdata/
 .DS_Store
 *.sh
 bin/*
+*.pkg
 www
-.www
 examples
 *.zip

@@ -1,0 +1,67 @@
+#!/bin/bash
+DIR=$(dirname "$0")
+clear
+ANSI_ART=$(cat <<EOF
+\e[0;m              \e[48;5;34m    \e[0;m    \e[0;m
+\e[0;m            \e[48;5;34m      \e[0;m    \e[0;m
+\e[0;m            \e[48;5;34m    \e[0;m      \e[0;m
+\e[0;m                      \e[0;m
+\e[0;m    \e[48;5;34m      \e[0;m      \e[48;5;34m      \e[0;m
+\e[0;m  \e[48;5;220m                    \e[0;m
+\e[48;5;220m                    \e[0;m  \e[0;m
+\e[48;5;208m                  \e[0;m    \e[0;m
+\e[48;5;208m                  \e[0;m    \e[0;m
+\e[48;5;160m                    \e[0;m  \e[0;m
+\e[48;5;160m                      \e[0;m
+\e[0;m  \e[48;5;125m                    \e[0;m
+\e[0;m    \e[48;5;125m                \e[0;m  \e[0;m
+\e[0;m      \e[48;5;38m    \e[0;m    \e[48;5;38m    \e[0;m    \e[0;m
+EOF
+)
+
+printf "$ANSI_ART\n"
+cd $DIR
+
+# Function to get the file creation year (for macOS using `stat`)
+get_file_creation_year() {
+    local file=$1
+    # Use `stat` to get the file creation time
+    local creation_time=$(stat -f %B "$file")
+    if [[ "$creation_time" -gt 0 ]]; then
+        # Convert timestamp to year
+        date -r "$creation_time" +%Y
+    else
+        echo "Unknown"
+    fi
+}
+
+# Get the current year
+current_year=$(date +%Y)
+
+# Iterate over all matching files
+find . -type f \( -name "*.c" -o -name "*.cpp" -o -name "*.h" -o -name "*.hpp" \) | while read -r file; do
+    # Extract the year from the copyright line
+    if grep -q "// Copyright (c) [0-9]\{4\} Insoft. All rights reserved." "$file"; then
+        # Get the existing copyright year
+        existing_year=$(grep "// Copyright (c) [0-9]\{4\} Insoft. All rights reserved." "$file" | grep -o "[0-9]\{4\}")
+        
+        # Update copyright line if the current year is greater than the existing copyright year
+        if (( current_year > existing_year )); then
+            sed -i '' "s,// Copyright (c) $existing_year Insoft. All rights reserved.,// Copyright (c) $existing_year-$current_year Insoft. All rights reserved.," "$file"
+        fi
+
+        # Get the file creation year
+        creation_year=$(get_file_creation_year "$file")
+
+        # Add "Originally created in [year]" line if the file creation year is less than the existing copyright year
+        if [[ "$creation_year" != "Unknown" && "$creation_year" -lt "$existing_year" ]]; then
+            # Add the line only if it doesn't already exist
+            if ! grep -q "// Originally created in $creation_year" "$file"; then
+                sed -i '' "/^\/\/ Copyright (c) $existing_year-$current_year Insoft. All rights reserved./a\\
+// Originally created in $creation_year" "$file"
+            fi
+        fi
+    fi
+done
+
+echo "Update complete."
