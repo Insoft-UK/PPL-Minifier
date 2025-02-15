@@ -10,7 +10,9 @@ pkgbuild --root package-root \
          --version 1.0 --install-location / \
          --scripts scripts \
          pplmin.pkg
- 
+         
+IDENTITY=$(security find-identity -v -p basic | grep "Developer ID Installer" | awk '{print $2}')
+productsign --sign "$IDENTITY" pplmin.pkg pplmin-signed.pkg
 
 read -p "Press Enter to exit!"
 
