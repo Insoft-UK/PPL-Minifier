@@ -1,6 +1,1 @@
-*.xcworkspace/xcuserdata/
-xcuserdata/
 .DS_Store
-*.pkg
-Package\ Installer/build
-examples
