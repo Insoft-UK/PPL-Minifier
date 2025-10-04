@@ -33,7 +33,6 @@
 #include <ostream>
 #include <fstream>
 
-#include "singleton.hpp"
 
 enum class MessageType {
     Warning,
@@ -56,8 +55,6 @@ std::string& strip(std::string& str);
 std::string strip_copy(const std::string& str);
 
 std::ifstream::pos_type file_size(const std::string& filename);
-bool file_exists(const char *filename);
-bool file_exists(const std::string& filename);
 
 
 #endif /* common_hpp */

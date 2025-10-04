@@ -24,7 +24,6 @@
 
 
 #include "common.hpp"
-#include "singleton.hpp"
 
 #include <sstream>
 #include <algorithm>
@@ -38,12 +37,6 @@ bool hasErrors(void) {
 }
 
 std::ostream& operator<<(std::ostream& os, MessageType type) {
-    Singleton *singlenton = Singleton::shared();
-
-    if (singlenton->currentPathname() != "") os << singlenton->currentPathname() << ":";
-    os << singlenton->currentLineNumber();
-
-
     switch (type) {
         case MessageType::Error:
             os << " error: ";
@@ -110,23 +103,6 @@ std::ifstream::pos_type file_size(const std::string& filename)
     in.close();
     return pos;
 }
-
-bool file_exists(const char *filename) {
-    std::ifstream infile;
-    
-    infile.open(filename, std::ios::in);
-    if (infile.is_open()) {
-        infile.close();
-        return true;
-    }
-    
-    return false;
-}
-
-bool file_exists(const std::string& filename) {
-    return file_exists(filename.c_str());
-}
-
 
 
 
