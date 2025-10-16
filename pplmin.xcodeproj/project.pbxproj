@@ -7,7 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		137DBFEA2E06F08400657C42 /* utf.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 137DBFE92E06F08400657C42 /* utf.cpp */; };
+		1375C34A2EA145B00095FA5B /* utf.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1375C3492EA145B00095FA5B /* utf.cpp */; };
 		137FB2892A03B06500AEFDF2 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 137FB2882A03B06500AEFDF2 /* main.cpp */; };
 		13C21F9D2A783D8D0067CE22 /* common.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 13C21F9B2A783D8D0067CE22 /* common.cpp */; };
 /* End PBXBuildFile section */
@@ -26,10 +26,12 @@
 
 /* Begin PBXFileReference section */
 		13166E852BA12E5E00D1E6F0 /* examples */ = {isa = PBXFileReference; lastKnownFileType = folder; path = examples; sourceTree = "<group>"; };
+		135158622EA1493900EEDF1C /* Makefile */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.make; path = Makefile; sourceTree = "<group>"; };
 		1351CC552BFC0E180073FEDF /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		136E644E2D35A99C0054E0CC /* version.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = version.txt; sourceTree = "<group>"; };
 		136E64502D35AB410054E0CC /* LICENSE.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = LICENSE.md; sourceTree = "<group>"; };
-		137DBFE92E06F08400657C42 /* utf.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = utf.cpp; path = ../PrimePlus/src/utf.cpp; sourceTree = SOURCE_ROOT; };
+		1375C3482EA145B00095FA5B /* utf.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = utf.hpp; sourceTree = "<group>"; };
+		1375C3492EA145B00095FA5B /* utf.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = utf.cpp; sourceTree = "<group>"; };
 		137FB2852A03B06500AEFDF2 /* pplmin */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = pplmin; sourceTree = BUILT_PRODUCTS_DIR; };
 		137FB2882A03B06500AEFDF2 /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
 		137FB2942A046E8E00AEFDF2 /* pplmin.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = pplmin.entitlements; sourceTree = "<group>"; };
@@ -55,6 +57,7 @@
 				136E644E2D35A99C0054E0CC /* version.txt */,
 				136E64502D35AB410054E0CC /* LICENSE.md */,
 				1351CC552BFC0E180073FEDF /* README.md */,
+				135158622EA1493900EEDF1C /* Makefile */,
 				137FB2942A046E8E00AEFDF2 /* pplmin.entitlements */,
 				13166E852BA12E5E00D1E6F0 /* examples */,
 				137FB2872A03B06500AEFDF2 /* src */,
@@ -77,7 +80,8 @@
 				13C21F9C2A783D8D0067CE22 /* common.hpp */,
 				13C21F9B2A783D8D0067CE22 /* common.cpp */,
 				1389CFED2CAA02A7008FDBEB /* timer.hpp */,
-				137DBFE92E06F08400657C42 /* utf.cpp */,
+				1375C3482EA145B00095FA5B /* utf.hpp */,
+				1375C3492EA145B00095FA5B /* utf.cpp */,
 			);
 			path = src;
 			sourceTree = "<group>";
@@ -109,7 +113,7 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
-				LastUpgradeCheck = 1600;
+				LastUpgradeCheck = 2600;
 				TargetAttributes = {
 					137FB2842A03B06500AEFDF2 = {
 						CreatedOnToolsVersion = 14.3;
@@ -139,9 +143,9 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				1375C34A2EA145B00095FA5B /* utf.cpp in Sources */,
 				137FB2892A03B06500AEFDF2 /* main.cpp in Sources */,
 				13C21F9D2A783D8D0067CE22 /* common.cpp in Sources */,
-				137DBFEA2E06F08400657C42 /* utf.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -205,6 +209,7 @@
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = macosx;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 			};
 			name = Debug;
 		};
@@ -258,12 +263,14 @@
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				SDKROOT = macosx;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 			};
 			name = Release;
 		};
 		137FB28D2A03B06500AEFDF2 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++23";
 				CODE_SIGN_ENTITLEMENTS = pplmin.entitlements;
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
 				CODE_SIGN_STYLE = Automatic;
@@ -272,6 +279,7 @@
 				ENABLE_HARDENED_RUNTIME = NO;
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				ENABLE_USER_SELECTED_FILES = "";
+				GCC_C_LANGUAGE_STANDARD = gnu23;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Debug;
@@ -279,6 +287,7 @@
 		137FB28E2A03B06500AEFDF2 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++23";
 				CODE_SIGN_ENTITLEMENTS = pplmin.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
@@ -288,6 +297,7 @@
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				ENABLE_USER_SELECTED_FILES = "";
+				GCC_C_LANGUAGE_STANDARD = gnu23;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 			};

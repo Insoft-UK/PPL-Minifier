@@ -1,26 +1,24 @@
-/*
- The MIT License (MIT)
- 
- Copyright (c) 2024 Insoft. All rights reserved.
- 
- Permission is hereby granted, free of charge, to any person obtaining a copy
- of this software and associated documentation files (the "Software"), to deal
- in the Software without restriction, including without limitation the rights
- to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- copies of the Software, and to permit persons to whom the Software is
- furnished to do so, subject to the following conditions:
- 
- The above copyright notice and this permission notice shall be included in all
- copies or substantial portions of the Software.
- 
- THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- SOFTWARE.
- */
+// The MIT License (MIT)
+// 
+// Copyright (c) 2024-2025 Insoft.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+// 
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
+// 
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
 
 
 #include <iostream>
@@ -31,7 +29,7 @@
 #include <iomanip>
 #include <unordered_set>
 #include <list>
-#include "../../PrimePlus/src/utf.hpp"
+#include "utf.hpp"
 
 #include <sys/time.h>
 
@@ -796,7 +794,7 @@ std::string minifiePrgm(std::ifstream &infile)
     std::string str;
     std::wstring wstr;
     
-    wstr = utf::read_utf16(infile);
+    wstr = utf::read(infile);
     if (wstr.empty()) {
         char c;
         infile.seekg(0);
@@ -806,7 +804,7 @@ std::string minifiePrgm(std::ifstream &infile)
             infile.peek();
         }
     } else {
-        str = utf::to_utf8(wstr);
+        str = utf::utf8(wstr);
     }
     
     auto python = extractPythonBlocks(str);
@@ -954,15 +952,14 @@ int main(int argc, char **argv) {
     
     if (path.extension().empty()) {
         path.append(".prgm");
-    }
-    if (!std::filesystem::exists(path) || path.extension() == ".hpprgm") {
+    } else if (path.extension() != ".prgm") {
         error();
         return 0;
     }
     
-    if (out_filename.empty())
+    if (out_filename.empty()) {
         out_filename = path.parent_path().string() + "/" + path.stem().string() + "-min.prgm";
-    
+    }
 
     // Start measuring time
     Timer timer;
@@ -978,7 +975,8 @@ int main(int argc, char **argv) {
     str = minifiePrgm(infile);
     infile.close();
     
-    utf::save_as_utf16(out_filename, str);
+    std::wstring wstr = utf::utf16(str);
+    utf::save(out_filename, wstr);
     
     // Stop measuring time and calculate the elapsed time.
     long long elapsed_time = timer.elapsed();
@@ -993,9 +991,6 @@ int main(int argc, char **argv) {
         return 0;
     }
     
-//    if (!Singleton::shared()->aliases.descendingOrder && Singleton::shared()->aliases.verbose) {
-//        Singleton::shared()->aliases.dumpIdentities();
-//    }
     
     // Percentage Reduction = (Original Size - New Size) / Original Size * 100
     std::ifstream::pos_type original_size = file_size(in_filename);
