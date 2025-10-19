@@ -857,7 +857,7 @@ std::string minifiePrgm(std::ifstream &infile)
 
 void version(void) {
     std::cout
-    << "Copyright (C) 2024 Insoft. All rights reserved."
+    << "Copyright (C) 2024-" << YEAR << " Insoft.\n"
     << "Insoft "<< NAME << " version, " << VERSION_NUMBER << " (BUILD " << VERSION_CODE << ")"
     << "Built on: " << DATE << ""
     << "Licence: MIT License\n"
@@ -870,14 +870,29 @@ void error(void) {
 }
 
 void info(void) {
-    std::cout 
-    << "Copyright (c) 2024 Insoft. All rights reserved."
-    << "Insoft "<< NAME << " version, " << VERSION_NUMBER << " (BUILD " << VERSION_CODE << ")\n\n";
+    using namespace std;
+    std::cout
+    << "          ***********     \n"
+    << "        ************      \n"
+    << "      ************        \n"
+    << "    ************  **      \n"
+    << "  ************  ******    \n"
+    << "************  **********  \n"
+    << "**********    ************\n"
+    << "************    **********\n"
+    << "  **********  ************\n"
+    << "    ******  ************  \n"
+    << "      **  ************    \n"
+    << "        ************      \n"
+    << "      ************        \n"
+    << "    ************          \n\n"
+    << "Copyright (C) 2024-" << YEAR << " Insoft.\n"
+    << "Insoft " << NAME << "\n\n";
 }
 
 void help(void) {
     std::cout 
-    << "Copyright (C) 2024-" << YEAR << " Insoft. All rights reserved."
+    << "Copyright (C) 2024-" << YEAR << " Insoft.\n"
     << "Insoft "<< NAME << " version, " << VERSION_NUMBER << " (BUILD " << VERSION_CODE << ")"
     << "\n"
     << "Usage: " << COMMAND_NAME << " <input-file>\n"
@@ -986,7 +1001,7 @@ int main(int argc, char **argv) {
 
     
     if (hasErrors() == true) {
-        std::cout << "ERRORS!\n";
+        std::cout << "❌ ERRORS!\n";
         remove(out_filename.c_str());
         return 0;
     }
@@ -1006,7 +1021,7 @@ int main(int argc, char **argv) {
     std::cout << "Reduction of " << (original_size - new_size) * 100 / original_size;
     std::cout << "%\n";
     
-    std::cout << "File '" << regex_replace(out_filename, std::regex(R"(.*/)"), "") << "' succefuly created.\n";
+    std::cout << "✅ File '" << regex_replace(out_filename, std::regex(R"(.*/)"), "") << "' succefuly created.\n";
     
     
     return 0;
