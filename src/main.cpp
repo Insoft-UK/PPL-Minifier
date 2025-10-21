@@ -921,6 +921,7 @@ protected:
 // MARK: - Main
 int main(int argc, char **argv) {
     std::string in_filename, out_filename;
+    bool showpath = false;
 
     if ( argc == 1 )
     {
@@ -955,6 +956,11 @@ int main(int argc, char **argv) {
             return 0;
         }
         
+        if (args == "--path") {
+            showpath = true;
+            continue;
+        }
+        
         in_filename = std::filesystem::expand_tilde(argv[n]);
     }
     
@@ -974,6 +980,13 @@ int main(int argc, char **argv) {
     
     if (out_filename.empty()) {
         out_filename = path.parent_path().string() + "/" + path.stem().string() + "-min.prgm";
+    } else {
+        if (std::filesystem::is_directory(out_filename)) {
+            /* User did not specify specify an output filename but has specified a path, so append
+             with the input filename and subtitute the extension with .prgm
+             */
+            out_filename = std::filesystem::path(out_filename).append(std::filesystem::path(in_filename).stem().string() + "-min.prgm");
+        }
     }
 
     // Start measuring time
@@ -1021,7 +1034,16 @@ int main(int argc, char **argv) {
     std::cout << "Reduction of " << (original_size - new_size) * 100 / original_size;
     std::cout << "%\n";
     
-    std::cout << "✅ File '" << regex_replace(out_filename, std::regex(R"(.*/)"), "") << "' succefuly created.\n";
+    if (!utf::save(out_filename, wstr)) {
+        std::cout << "❌ Unable to create file " << std::filesystem::path(out_filename).filename() << ".\n";
+        return 0;
+    }
+    
+    std::cout << "✅ File ";
+    if (showpath)
+        std::cout << "at \"" << out_filename << "\" succefuly created.\n";
+    else
+        std::cout << std::filesystem::path(out_filename).filename() << " succefuly created.\n";
     
     
     return 0;
