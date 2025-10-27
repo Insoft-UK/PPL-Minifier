@@ -856,7 +856,7 @@ std::string minifiePrgm(std::ifstream &infile)
 
 
 void version(void) {
-    std::cout
+    std::cerr
     << "Copyright (C) 2024-" << YEAR << " Insoft.\n"
     << "Insoft "<< NAME << " version, " << VERSION_NUMBER << " (BUILD " << VERSION_CODE << ")"
     << "Built on: " << DATE << ""
@@ -865,13 +865,12 @@ void version(void) {
 }
 
 void error(void) {
-    std::cout << COMMAND_NAME << ": try '" << COMMAND_NAME << " --help' for more information\n";
+    std::cerr << COMMAND_NAME << ": try '" << COMMAND_NAME << " --help' for more information\n";
     exit(0);
 }
 
 void info(void) {
-    using namespace std;
-    std::cout
+    std::cerr
     << "          ***********     \n"
     << "        ************      \n"
     << "      ************        \n"
@@ -891,7 +890,7 @@ void info(void) {
 }
 
 void help(void) {
-    std::cout 
+    std::cerr
     << "Copyright (C) 2024-" << YEAR << " Insoft.\n"
     << "Insoft "<< NAME << " version, " << VERSION_NUMBER << " (BUILD " << VERSION_CODE << ")"
     << "\n"
@@ -920,7 +919,7 @@ protected:
 
 // MARK: - Main
 int main(int argc, char **argv) {
-    std::string in_filename, out_filename;
+    std::string in_filename = "/dev/stdin", out_filename;
     bool showpath = false;
 
     if ( argc == 1 )
@@ -1000,21 +999,26 @@ int main(int argc, char **argv) {
         error();
         return 0;
     }
+    
     str = minifiePrgm(infile);
+    std::wstring wstr = utf::utf16(str);
     infile.close();
     
-    std::wstring wstr = utf::utf16(str);
-    utf::save(out_filename, wstr);
+    if (out_filename == "/dev/stdout") {
+        std::cout << str;
+    } else {
+        utf::save(out_filename, wstr);
+    }
     
     // Stop measuring time and calculate the elapsed time.
     long long elapsed_time = timer.elapsed();
     
     // Display elasps time in secononds.
-    std::cout << "Completed in " << std::fixed << std::setprecision(2) << elapsed_time / 1e9 << " seconds\n";
+    std::cerr << "Completed in " << std::fixed << std::setprecision(2) << elapsed_time / 1e9 << " seconds\n";
 
     
     if (hasErrors() == true) {
-        std::cout << "❌ ERRORS!\n";
+        std::cerr << "❌ ERRORS!\n";
         remove(out_filename.c_str());
         return 0;
     }
@@ -1029,21 +1033,21 @@ int main(int argc, char **argv) {
     
     // Create a locale with the custom comma-based numpunct
     std::locale commaLocale(std::locale::classic(), new comma_numpunct);
-    std::cout.imbue(commaLocale);
+    std::cerr.imbue(commaLocale);
     
-    std::cout << "Reduction of " << (original_size - new_size) * 100 / original_size;
-    std::cout << "%\n";
+    std::cerr << "Reduction of " << (original_size - new_size) * 100 / original_size;
+    std::cerr << "%\n";
     
     if (!utf::save(out_filename, wstr)) {
-        std::cout << "❌ Unable to create file " << std::filesystem::path(out_filename).filename() << ".\n";
+        std::cerr << "❌ Unable to create file " << std::filesystem::path(out_filename).filename() << ".\n";
         return 0;
     }
     
-    std::cout << "✅ File ";
+    std::cerr << "✅ File ";
     if (showpath)
-        std::cout << "at \"" << out_filename << "\" succefuly created.\n";
+        std::cerr << "at \"" << out_filename << "\" succefuly created.\n";
     else
-        std::cout << std::filesystem::path(out_filename).filename() << " succefuly created.\n";
+        std::cerr << std::filesystem::path(out_filename).filename() << " succefuly created.\n";
     
     
     return 0;
