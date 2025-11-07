@@ -42,8 +42,6 @@
 #define NAME "PPL Minifier"
 #define COMMAND_NAME "pplmin"
 
-static bool preserveFunctionNames = false;
-
 void terminator() {
   std::cout << MessageType::Error << "An internal preprocessing problem occurred. Please review the syntax before this point.\n";
   exit(-1);
@@ -816,7 +814,6 @@ std::string minifiePrgm(std::ifstream &infile)
     str = replaceTabsWithSpaces(str);
     str = reduceMultipleSpaces(str);
     str = removeBlankLines(str);
-    str = cleanWhitespace(str);
     str = replaceOperators(str);
     
     str = capitalizeWords(str, {
@@ -826,16 +823,26 @@ std::string minifiePrgm(std::ifstream &infile)
     });
     str = capitalizeWords(str, {"log", "cos", "sin", "tan", "result", "min", "max"});
     str = replaceWords(str, {"FROM"}, ":=");
+    str = cleanWhitespace(str);
     str = fixUnaryMinus(str);
     str = removeNewlineAfterSemicolon(str);
     str = removeNewlineBeforeSymbols(str);
     
+    {
+        std::regex re(R"(([^a-zA-Z])\s+)");
+        str = regex_replace(str, re, "$1");
+    }
+    
+    {
+        std::regex re("={2}");
+        str = regex_replace(str, re, "=");
+    }
+    
     str = restoreStrings(str, strings);
     str = separatePythonMarkers(str);
     str = restorePythonBlocks(str, python);
-    
 
-    std::regex re(R"((\bEXPORT )?([a-zA-Z]\w*)\([a-zA-Z,]*\)\s*(?=BEGIN\b))");
+    std::regex re(R"((?:\b(EXPORT|LOCAL) )?([a-zA-Z]\w*)\([a-zA-Z,]*\)\s*(?=BEGIN\b))");
     std::sregex_iterator begin(str.begin(), str.end(), re);
     std::sregex_iterator end;
     std::string result = str;
@@ -844,11 +851,8 @@ std::string minifiePrgm(std::ifstream &infile)
     for (auto it = begin; it != end; ++it) {
         std::smatch match = *it;
 
-        std::string export_kw = match[1].str();  // optional "EXPORT "
-        std::string function_name = match[2].str();
-        
-        if (export_kw.empty() && !preserveFunctionNames) {
-            result = replaceWords(result, {function_name}, "fn" + base10ToBase32(fn++));
+        if (match[1].str() == "LOCAL") {
+            result = replaceWords(result, {match[2].str()}, "fn" + base10ToBase32(fn++));
         }
     }
     return result;
@@ -896,9 +900,6 @@ void help(void) {
     << "\n"
     << "Usage: " << COMMAND_NAME << " <input-file>\n"
     << "\n"
-    << "Options:\n"
-    << "  -f                      Preserve function names.\n"
-    << "\n"
     << "Additional Commands:"
     << "  " << COMMAND_NAME << " {-version | -help}"
     << "    -version              Display the version information."
@@ -936,11 +937,6 @@ int main(int argc, char **argv) {
             exit(0);
         }
         
-        if ( args == "-f" ) {
-            preserveFunctionNames = true;
-            continue;
-        }
-        
         if ( args == "-o" ) {
             if ( n + 1 >= argc ) {
                 error();
@@ -963,7 +959,7 @@ int main(int argc, char **argv) {
         in_filename = std::filesystem::expand_tilde(argv[n]);
     }
     
-    info();
+    if (in_filename != "/dev/stdout") info();
     
     if (std::filesystem::path(in_filename).parent_path().empty()) {
         in_filename = in_filename.insert(0, "./");

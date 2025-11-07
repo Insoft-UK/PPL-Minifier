@@ -1,0 +1,53 @@
+MyGlobalFunction()
+BEGIN
+END;
+
+EXPORT MyExportedFunction()
+BEGIN
+END;
+
+LOCAL MyLocalFunction()
+BEGIN
+END;
+
+MySecondLocalFunction();
+
+LOCAL MySecondLocalFunction()
+BEGIN
+END;
+
+START()
+BEGIN
+    LOCAL a := 0;
+    LOCAL b := 100, c := 100;
+    LOCAL longname := "a == b";
+    
+    MyGlobalFunction();
+    MyExportedFunction();
+    MySecondLocalFunction();
+    MyLocalFunction();
+    
+    FOR A FROM 0 TO 100 DO
+        a = a + 1;
+    END;
+    
+    IF a==b THEN
+        a := a - 100;
+    ELSE
+        a := 0;
+    END;
+    
+    REPEAT
+        a := a + 1;
+    UNTIL a==b;
+    
+    WHILE a==b DO
+        a := 0;
+    END;
+    
+    CASE
+    IF a == 0 THEN
+    END;
+    DEFAULT
+    END;
+END;

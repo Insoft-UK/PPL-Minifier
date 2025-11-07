@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 56;
+	objectVersion = 70;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -40,6 +40,10 @@
 		13C21F9C2A783D8D0067CE22 /* common.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = common.hpp; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		13EE4E292EBD7F8B00A8F770 /* test */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = test; sourceTree = "<group>"; };
+/* End PBXFileSystemSynchronizedRootGroup section */
+
 /* Begin PBXFrameworksBuildPhase section */
 		137FB2822A03B06500AEFDF2 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
@@ -59,6 +63,7 @@
 				1351CC552BFC0E180073FEDF /* README.md */,
 				135158622EA1493900EEDF1C /* Makefile */,
 				137FB2942A046E8E00AEFDF2 /* pplmin.entitlements */,
+				13EE4E292EBD7F8B00A8F770 /* test */,
 				13166E852BA12E5E00D1E6F0 /* examples */,
 				137FB2872A03B06500AEFDF2 /* src */,
 				137FB2862A03B06500AEFDF2 /* Products */,
