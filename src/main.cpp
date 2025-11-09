@@ -973,8 +973,8 @@ std::string minifiePrgm(std::ifstream &infile)
 void version(void) {
     std::cerr
     << "Copyright (C) 2024-" << YEAR << " Insoft.\n"
-    << "Insoft "<< NAME << " version, " << VERSION_NUMBER << " (BUILD " << BUNDLE_VERSION << ")"
-    << "Built on: " << DATE << ""
+    << "Insoft "<< NAME << " version, " << VERSION_NUMBER << " (BUILD " << BUNDLE_VERSION << ")\n"
+    << "Built on: " << DATE << "\n"
     << "Licence: MIT License\n"
     << "For more information, visit: http://www.insoft.uk\n";
 }
@@ -1007,13 +1007,16 @@ void info(void) {
 void help(void) {
     std::cerr
     << "Copyright (C) 2024-" << YEAR << " Insoft.\n"
-    << "Insoft "<< NAME << " version, " << VERSION_NUMBER << " (BUILD " << BUNDLE_VERSION << ")"
+    << "Insoft "<< NAME << " version, " << VERSION_NUMBER << " (BUILD " << BUNDLE_VERSION << ")\n"
     << "\n"
-    << "Usage: " << COMMAND_NAME << " <input-file>\n"
+    << "Usage: " << COMMAND_NAME << " <input-file> [-o <output-file>]\n"
     << "\n"
-    << "Additional Commands:"
-    << "  " << COMMAND_NAME << " {-version | -help}"
-    << "    -version              Display the version information."
+    << "Options:\n"
+    << "  -o <output-file>        Specify the filename for generated PPL code.\n"
+    << "\n"
+    << "Additional Commands:\n"
+    << "  " << COMMAND_NAME << " {-version | -help}\n"
+    << "    -version              Display the version information.\n"
     << "    -help                 Show this help message.\n";
 }
 
@@ -1043,7 +1046,7 @@ int main(int argc, char **argv) {
     for( int n = 1; n < argc; n++ ) {
         std::string args(argv[n]);
         
-        if ( args == "-help" ) {
+        if ( args == "--help" ) {
             help();
             exit(0);
         }
@@ -1057,7 +1060,7 @@ int main(int argc, char **argv) {
             continue;
         }
         
-        if ( strcmp( argv[n], "-version" ) == 0 ) {
+        if ( strcmp( argv[n], "--version" ) == 0 ) {
             version();
             return 0;
         }
