@@ -694,6 +694,113 @@ std::string restoreStrings(const std::string& str, std::list<std::string>& strin
     return result;
 }
 
+std::pair<size_t, size_t> findBeginEndBlock(const std::string& code, size_t beginPos = 0)
+{
+    std::regex tokenRegex(R"(\b(?:BEGIN|FOR|IF|WHILE|REPEAT|CASE)\b|END;)");
+    std::smatch match;
+    
+    std::regex pattern(R"(\bBEGIN\b)");
+    // Create iterators for all matches
+    auto begin = std::sregex_iterator(code.begin(), code.end(), pattern);
+    auto end = std::sregex_iterator();
+
+    // Loop through all matches
+    for (auto it = begin; it != end; ++it) {
+        std::smatch match = *it;
+        if (match.position() >= beginPos) {
+            beginPos = match.position() + match.length();
+            break;
+        }
+        if (std::next(it) == end) return {std::string::npos, std::string::npos};
+    }
+    
+    
+    size_t searchPos = beginPos;
+    int depth = 1;
+    
+    while (std::regex_search(code.begin() + searchPos, code.end(), match, tokenRegex))
+    {
+        std::string token = match.str();
+        size_t pos = match.position() + searchPos;
+        
+        if (token == "BEGIN" || token == "FOR" || token == "IF" ||
+            token == "WHILE" || token == "REPEAT" || token == "CASE")
+        {
+            depth++;
+        }
+        else if (token == "END;")
+        {
+            depth--;
+            if (depth == 0)
+            {
+                size_t endPos = pos; // start of matching END;
+                return {beginPos, endPos};
+            }
+        }
+        
+        searchPos = pos + token.length();
+    }
+    
+    return {std::string::npos, std::string::npos};
+}
+
+// Extracts variable names from all LOCAL declarations
+std::vector<std::string> extractLocalVariables(const std::string& code)
+{
+    std::vector<std::string> variables;
+
+    // Match full LOCAL lines: e.g. LOCAL a, b:=10;
+    std::regex localRegex(R"(\bLOCAL\b([^;:]*);)", std::regex_constants::icase);
+    std::smatch match;
+    std::string::const_iterator searchStart(code.cbegin());
+
+    while (std::regex_search(searchStart, code.cend(), match, localRegex))
+    {
+        std::string locals = match[1]; // everything after LOCAL up to ;
+        
+        // Split by commas
+        std::regex varRegex(R"([A-Za-z_]\w*)");
+        std::smatch varMatch;
+        std::string::const_iterator varSearch(locals.cbegin());
+
+        while (std::regex_search(varSearch, locals.cend(), varMatch, varRegex))
+        {
+            std::string varName = varMatch.str();
+            variables.push_back(varName);
+            varSearch = varMatch.suffix().first;
+        }
+
+        searchStart = match.suffix().first;
+    }
+
+    return variables;
+}
+
+
+
+std::string shortenVariableNames(const std::string& code) {
+    auto str = code;
+    auto pos = findBeginEndBlock(str);
+    
+    if (pos.first == std::string::npos && pos.second == std::string::npos) return str;
+   
+    do {
+        auto s = str.substr(pos.first, pos.second - pos.first);
+        
+        int count = 0;
+        auto vars = extractLocalVariables(s);
+        for (const auto& v : vars) {
+            if (v.length() < 3) continue;
+            s = replaceWords(s, {v}, "v" + std::to_string(++count));
+        }
+        str = str.replace(pos.first, pos.second - pos.first, s);
+        pos = findBeginEndBlock(str, pos.first);
+           
+    } while (pos.first != std::string::npos && pos.second != std::string::npos);
+    
+    return str;
+}
+
 // MARK: - Utills
 
 std::string base10ToBase32(unsigned int num) {
@@ -805,12 +912,14 @@ std::string minifiePrgm(std::ifstream &infile)
         str = utf::utf8(wstr);
     }
     
+    
+    
     auto python = extractPythonBlocks(str);
     str = blankOutPythonBlocks(str);
     
     auto strings = preserveStrings(str);
     str = blankOutStrings(str);
-    
+
     str = replaceTabsWithSpaces(str);
     str = reduceMultipleSpaces(str);
     str = removeBlankLines(str);
@@ -822,6 +931,7 @@ std::string minifiePrgm(std::ifstream &infile)
         "while", "repeat", "until", "break", "continue", "export", "const", "local", "key"
     });
     str = capitalizeWords(str, {"log", "cos", "sin", "tan", "result", "min", "max"});
+    str = shortenVariableNames(str);
     str = replaceWords(str, {"FROM"}, ":=");
     str = cleanWhitespace(str);
     str = fixUnaryMinus(str);
@@ -829,7 +939,7 @@ std::string minifiePrgm(std::ifstream &infile)
     str = removeNewlineBeforeSymbols(str);
     
     {
-        std::regex re(R"(([^a-zA-Z])\s+)");
+        std::regex re(R"(([^\w])\s+)");
         str = regex_replace(str, re, "$1");
     }
     
@@ -855,6 +965,7 @@ std::string minifiePrgm(std::ifstream &infile)
             result = replaceWords(result, {match[2].str()}, "fn" + base10ToBase32(fn++));
         }
     }
+    
     return result;
 }
 
@@ -862,7 +973,7 @@ std::string minifiePrgm(std::ifstream &infile)
 void version(void) {
     std::cerr
     << "Copyright (C) 2024-" << YEAR << " Insoft.\n"
-    << "Insoft "<< NAME << " version, " << VERSION_NUMBER << " (BUILD " << VERSION_CODE << ")"
+    << "Insoft "<< NAME << " version, " << VERSION_NUMBER << " (BUILD " << BUNDLE_VERSION << ")"
     << "Built on: " << DATE << ""
     << "Licence: MIT License\n"
     << "For more information, visit: http://www.insoft.uk\n";
@@ -896,7 +1007,7 @@ void info(void) {
 void help(void) {
     std::cerr
     << "Copyright (C) 2024-" << YEAR << " Insoft.\n"
-    << "Insoft "<< NAME << " version, " << VERSION_NUMBER << " (BUILD " << VERSION_CODE << ")"
+    << "Insoft "<< NAME << " version, " << VERSION_NUMBER << " (BUILD " << BUNDLE_VERSION << ")"
     << "\n"
     << "Usage: " << COMMAND_NAME << " <input-file>\n"
     << "\n"

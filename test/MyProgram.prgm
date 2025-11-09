@@ -1,53 +1,29 @@
-MyGlobalFunction()
+EXPORT average(list)
 BEGIN
+    LOCAL sum, count, i;
+    sum := 0;
+    count := DIM(list);
+    FOR i FROM 1 TO count DO
+        sum := sum + list(i);
+    END;
+    RETURN sum / count;
 END;
 
-EXPORT MyExportedFunction()
+EXPORT another()
 BEGIN
+    LOCAL x;
+    IF 1 THEN
+        x := 10;
+    END;
+    RETURN x;
 END;
 
-LOCAL MyLocalFunction()
+LOCAL TestList()
 BEGIN
-END;
-
-MySecondLocalFunction();
-
-LOCAL MySecondLocalFunction()
-BEGIN
+    RETURN {0,1,2,3,4,5};
 END;
 
 START()
 BEGIN
-    LOCAL a := 0;
-    LOCAL b := 100, c := 100;
-    LOCAL longname := "a == b";
-    
-    MyGlobalFunction();
-    MyExportedFunction();
-    MySecondLocalFunction();
-    MyLocalFunction();
-    
-    FOR A FROM 0 TO 100 DO
-        a = a + 1;
-    END;
-    
-    IF a==b THEN
-        a := a - 100;
-    ELSE
-        a := 0;
-    END;
-    
-    REPEAT
-        a := a + 1;
-    UNTIL a==b;
-    
-    WHILE a==b DO
-        a := 0;
-    END;
-    
-    CASE
-    IF a == 0 THEN
-    END;
-    DEFAULT
-    END;
+    average(TestList());
 END;
