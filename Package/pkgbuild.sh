@@ -31,4 +31,4 @@ xcrun stapler validate $NAME-signed.pkg
 spctl --assess --type install --verbose $NAME-signed.pkg
 
 rm $NAME.pkg
-mv $NAME-signed.pkg ../$NAME_$(date +"%Y%m%d").pkg
+mv $NAME-signed.pkg ../$NAME\_$(date +"%Y%m%d").pkg
