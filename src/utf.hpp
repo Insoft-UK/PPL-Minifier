@@ -28,6 +28,7 @@
 #include <sstream>
 #include <fstream>
 #include <cstdlib>
+#include <filesystem>
 
 namespace utf {
     enum BOM {
@@ -36,44 +37,14 @@ namespace utf {
         BOMnone
     };
     
-    [[deprecated("Use utf8 instead")]]
-    std::string to_utf8(const std::wstring& wstr);
-    
-    [[deprecated("Use utf16 instead")]]
-    std::wstring to_utf16(const std::string& str);
-    
-    [[deprecated]]
-    std::wstring read_as_utf16(std::ifstream& is);
-    
-    [[deprecated("Use read instead")]]
-    std::wstring read_utf16(std::ifstream& is);
-    
-    [[deprecated("Use load instead")]]
-    std::wstring load_utf16(const std::string& filepath);
-    
-    [[deprecated("Use write instead")]]
-    size_t write_utf8(std::ofstream& os, const std::string& str);
-    
-    [[deprecated("Use save instead")]]
-    bool save_as_utf8(const std::string& filepath, const std::string& str);
-    
-    [[deprecated("Use write instead")]]
-    size_t write_as_utf16(std::ofstream& os, const std::string& str);
-    
-    [[deprecated("Use write instead")]]
-    size_t write_utf16(std::ofstream& os, const std::wstring& wstr);
-    
-    [[deprecated("Use save instead")]]
-    bool save_as_utf16(const std::string& filepath, const std::string& str);
-    
     std::string utf8(const std::wstring& wstr);
     std::wstring utf16(const std::string& str);
     std::wstring read(std::ifstream& is, BOM bom = BOMle);
-    std::wstring load(const std::string& filepath, BOM bom = BOMle);
+    std::wstring load(const std::filesystem::path& path, BOM bom = BOMle);
     size_t write(std::ofstream& os, const std::string& str);
     size_t write(std::ofstream& os, const std::wstring& wstr, BOM bom = BOMle);
-    bool save(const std::string& filepath, const std::string& str);
-    bool save(const std::string& filepath, const std::wstring& wstr, BOM bom = BOMle);
+    bool save(const std::filesystem::path& path, const std::string& str);
+    bool save(const std::filesystem::path& path, const std::wstring& wstr, BOM bom = BOMle);
 };
 
 #endif /* utf_hpp */

@@ -22,6 +22,7 @@
 
 
 #include <iostream>
+#include <filesystem>
 #include <fstream>
 #include <sstream>
 #include <regex>
@@ -878,9 +879,9 @@ std::string fixUnaryMinus(const std::string& input) {
     return output;
 }
 
-static bool is_utf16(const std::string& filepath) {
+static bool is_utf16(const std::filesystem::path& path) {
     std::ifstream is;
-    is.open(filepath, std::ios::in | std::ios::binary);
+    is.open(path, std::ios::in | std::ios::binary);
     if(!is.is_open()) {
         return false;
     }
@@ -1034,7 +1035,9 @@ protected:
 
 // MARK: - Main
 int main(int argc, char **argv) {
-    std::string in_filename = "/dev/stdin", out_filename;
+    namespace fs = std::filesystem;
+    
+    fs::path inpath, outpath;
     bool showpath = false;
 
     if ( argc == 1 )
@@ -1056,7 +1059,8 @@ int main(int argc, char **argv) {
                 error();
                 exit(0);
             }
-            out_filename = std::filesystem::expand_tilde(argv[++n]);
+            outpath = fs::path(argv[++n]);
+            outpath = fs::expand_tilde(outpath);
             continue;
         }
         
@@ -1070,31 +1074,32 @@ int main(int argc, char **argv) {
             continue;
         }
         
-        in_filename = std::filesystem::expand_tilde(argv[n]);
+        inpath = fs::path(argv[n]);
+        inpath = fs::expand_tilde(inpath);
     }
     
-    if (in_filename != "/dev/stdout") info();
+    if (inpath != "/dev/stdout") info();
     
-    if (std::filesystem::path(in_filename).parent_path().empty()) {
-        in_filename = in_filename.insert(0, "./");
+    if (inpath.parent_path().empty()) {
+        inpath = fs::path("./") / inpath;
     }
-    std::filesystem::path path = in_filename;
     
-    if (path.extension().empty()) {
-        path.append(".prgm");
-    } else if (path.extension() != ".prgm") {
+    if (inpath.extension().empty()) {
+        inpath.append(".prgm");
+    } else if (inpath.extension() != ".prgm") {
         error();
         return 0;
     }
+
     
-    if (out_filename.empty()) {
-        out_filename = path.parent_path().string() + "/" + path.stem().string() + "-min.prgm";
+    if (outpath.empty()) {
+        outpath = inpath.parent_path() / (inpath.stem().string() + "-min.prgm");
     } else {
-        if (std::filesystem::is_directory(out_filename)) {
+        if (fs::is_directory(outpath)) {
             /* User did not specify specify an output filename but has specified a path, so append
              with the input filename and subtitute the extension with .prgm
              */
-            out_filename = std::filesystem::path(out_filename).append(std::filesystem::path(in_filename).stem().string() + "-min.prgm");
+            outpath = outpath / (inpath.stem().string() + "-min.prgm");
         }
     }
 
@@ -1104,7 +1109,7 @@ int main(int argc, char **argv) {
     std::string str;
 
     std::ifstream infile;
-    infile.open(in_filename, std::ios::in | std::ios::binary);
+    infile.open(inpath, std::ios::in | std::ios::binary);
     if (!infile.is_open()) {
         error();
         return 0;
@@ -1114,10 +1119,10 @@ int main(int argc, char **argv) {
     std::wstring wstr = utf::utf16(str);
     infile.close();
     
-    if (out_filename == "/dev/stdout") {
+    if (outpath == "/dev/stdout") {
         std::cout << str;
     } else {
-        utf::save(out_filename, wstr);
+        utf::save(outpath, wstr);
     }
     
     // Stop measuring time and calculate the elapsed time.
@@ -1129,16 +1134,16 @@ int main(int argc, char **argv) {
     
     if (hasErrors() == true) {
         std::cerr << "❌ ERRORS!\n";
-        remove(out_filename.c_str());
+        remove(outpath.string().c_str());
         return 0;
     }
     
     
     // Percentage Reduction = (Original Size - New Size) / Original Size * 100
-    std::ifstream::pos_type original_size = file_size(in_filename);
-    std::ifstream::pos_type new_size = file_size(out_filename);
+    std::ifstream::pos_type original_size = file_size(inpath);
+    std::ifstream::pos_type new_size = file_size(outpath);
     
-    if (is_utf16(in_filename) == false) original_size = original_size * 2;
+    if (is_utf16(inpath) == false) original_size = original_size * 2;
     
     
     // Create a locale with the custom comma-based numpunct
@@ -1148,16 +1153,16 @@ int main(int argc, char **argv) {
     std::cerr << "Reduction of " << (original_size - new_size) * 100 / original_size;
     std::cerr << "%\n";
     
-    if (!utf::save(out_filename, wstr)) {
-        std::cerr << "❌ Unable to create file " << std::filesystem::path(out_filename).filename() << ".\n";
+    if (!utf::save(outpath, wstr)) {
+        std::cerr << "❌ Unable to create file " << outpath.filename() << ".\n";
         return 0;
     }
     
     std::cerr << "✅ File ";
     if (showpath)
-        std::cerr << "at \"" << out_filename << "\" succefuly created.\n";
+        std::cerr << "at \"" << outpath << "\" succefuly created.\n";
     else
-        std::cerr << std::filesystem::path(out_filename).filename() << " succefuly created.\n";
+        std::cerr << outpath.filename() << " succefuly created.\n";
     
     
     return 0;
