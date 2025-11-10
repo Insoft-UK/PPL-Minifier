@@ -1150,8 +1150,7 @@ int main(int argc, char **argv) {
     std::locale commaLocale(std::locale::classic(), new comma_numpunct);
     std::cerr.imbue(commaLocale);
     
-    std::cerr << "Reduction of " << (original_size - new_size) * 100 / original_size;
-    std::cerr << "%\n";
+    std::cerr << inpath.filename().string() << " (deflated " << (original_size - new_size) * 100 / original_size << "%)\n";
     
     if (!utf::save(outpath, wstr)) {
         std::cerr << "❌ Unable to create file " << outpath.filename() << ".\n";
@@ -1162,7 +1161,7 @@ int main(int argc, char **argv) {
     if (showpath)
         std::cerr << "at \"" << outpath << "\" succefuly created.\n";
     else
-        std::cerr << outpath.filename() << " succefuly created.\n";
+        std::cerr << outpath.filename().string() << " succefuly created.\n";
     
     
     return 0;
