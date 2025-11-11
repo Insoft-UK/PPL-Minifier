@@ -1055,11 +1055,11 @@ int main(int argc, char **argv) {
         }
         
         if ( args == "-o" ) {
-            if ( n + 1 >= argc ) {
+            if ( ++n >= argc ) {
                 error();
                 exit(0);
             }
-            outpath = fs::path(argv[++n]);
+            outpath = fs::path(argv[n]);
             outpath = fs::expand_tilde(outpath);
             continue;
         }

@@ -1,4 +1,5 @@
 BUILD := build
+PROJECT_NAME ?= project
 
 all:
 	mkdir -p $(BUILD)
