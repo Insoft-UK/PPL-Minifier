@@ -1,4 +1,4 @@
-<img src="https://raw.githubusercontent.com/Insoft-UK/PrimeSDK/main/assets/PrimeSDK.png" style="width: 128px" />
+<img src="https://raw.githubusercontent.com/Insoft-UK/PrimeSDK/main/assets/Nightly%20Build.png" style="width: 128px" />
 
 ## Minifier for PPL Code
 **Command Line Tool**
