@@ -1078,7 +1078,7 @@ int main(int argc, char **argv) {
         inpath = fs::expand_tilde(inpath);
     }
     
-    if (inpath != "/dev/stdout") info();
+    if (outpath != "/dev/stdout") info();
     
     if (inpath.parent_path().empty()) {
         inpath = fs::path("./") / inpath;
