@@ -949,6 +949,9 @@ std::string minifiePrgm(std::ifstream &infile)
         str = regex_replace(str, re, "=");
     }
     
+    str = regex_replace(str, std::regex(R"(^#pragma mode\(([a-z]+\([^()]+\))+\))"), "$0\n");
+    
+    
     str = restoreStrings(str, strings);
     str = separatePythonMarkers(str);
     str = restorePythonBlocks(str, python);
@@ -983,26 +986,6 @@ void version(void) {
 void error(void) {
     std::cerr << COMMAND_NAME << ": try '" << COMMAND_NAME << " --help' for more information\n";
     exit(0);
-}
-
-void info(void) {
-    std::cerr
-    << "          ***********     \n"
-    << "        ************      \n"
-    << "      ************        \n"
-    << "    ************  **      \n"
-    << "  ************  ******    \n"
-    << "************  **********  \n"
-    << "**********    ************\n"
-    << "************    **********\n"
-    << "  **********  ************\n"
-    << "    ******  ************  \n"
-    << "      **  ************    \n"
-    << "        ************      \n"
-    << "      ************        \n"
-    << "    ************          \n\n"
-    << "Copyright (C) 2024-" << YEAR << " Insoft.\n"
-    << "Insoft " << NAME << "\n\n";
 }
 
 void help(void) {
@@ -1078,7 +1061,6 @@ int main(int argc, char **argv) {
         inpath = fs::expand_tilde(inpath);
     }
     
-    if (outpath != "/dev/stdout") info();
     
     if (inpath.parent_path().empty()) {
         inpath = fs::path("./") / inpath;
