@@ -34,7 +34,6 @@
 
 #include <sys/time.h>
 
-//#include "singleton.hpp"
 #include "common.hpp"
 
 #include "../version_code.h"
@@ -54,6 +53,8 @@ void (*old_terminate)() = std::set_terminate(terminator);
 void preProcess(std::string &ln, std::ofstream &outfile);
 
 // MARK: - Extensions
+
+namespace fs = std::filesystem;
 
 namespace std::filesystem {
     std::filesystem::path expand_tilde(const std::filesystem::path& path) {
@@ -1016,6 +1017,52 @@ protected:
     }
 };
 
+fs::path resolveAndValidateInputFile(const char *input_file) {
+    fs::path path;
+    
+    path = input_file;
+    if (path == "/dev/stdin") return path;
+    
+    path = fs::expand_tilde(path);
+    if (path.parent_path().empty()) path = fs::path("./") / path;
+    
+    // • Applies a default extension
+    if (path.extension().empty()) path.replace_extension("prgm");
+    
+    if (!fs::exists(path)) {
+        std::cerr << "❓File " << path.filename() << " not found at " << path.parent_path() << " location.\n";
+        exit(0);
+    }
+    
+    return path;
+}
+
+fs::path resolveOutputFile(const char *output_file) {
+    fs::path path;
+    
+    path = output_file;
+    if (path == "/dev/stdout") return path;
+    
+    path = fs::expand_tilde(path);
+    
+    return path;
+}
+
+fs::path resolveOutputPath(const fs::path& inpath, const fs::path& outpath) {
+    fs::path path = outpath;
+    
+    if (path == "/dev/stdout") return path;
+    
+    if (path.empty()) {
+        inpath.parent_path() / (inpath.stem().string() + "-min.prgm");
+        return path;
+    }
+    
+    if (fs::is_directory(path)) path = path / (inpath.stem().string() + "-min.prgm");
+    
+    return path;
+}
+
 // MARK: - Main
 int main(int argc, char **argv) {
     namespace fs = std::filesystem;
@@ -1042,8 +1089,7 @@ int main(int argc, char **argv) {
                 error();
                 exit(0);
             }
-            outpath = fs::path(argv[n]);
-            outpath = fs::expand_tilde(outpath);
+            outpath = resolveOutputFile(argv[n]);
             continue;
         }
         
@@ -1057,33 +1103,10 @@ int main(int argc, char **argv) {
             continue;
         }
         
-        inpath = fs::path(argv[n]);
-        inpath = fs::expand_tilde(inpath);
+        inpath = resolveAndValidateInputFile(argv[n]);
     }
     
-    
-    if (inpath.parent_path().empty()) {
-        inpath = fs::path("./") / inpath;
-    }
-    
-    if (inpath.extension().empty()) {
-        inpath.append(".prgm");
-    } else if (inpath.extension() != ".prgm") {
-        error();
-        return 0;
-    }
-
-    
-    if (outpath.empty()) {
-        outpath = inpath.parent_path() / (inpath.stem().string() + "-min.prgm");
-    } else {
-        if (fs::is_directory(outpath)) {
-            /* User did not specify specify an output filename but has specified a path, so append
-             with the input filename and subtitute the extension with .prgm
-             */
-            outpath = outpath / (inpath.stem().string() + "-min.prgm");
-        }
-    }
+    outpath = resolveOutputPath(inpath, outpath);
 
     // Start measuring time
     Timer timer;
